@@ -1,0 +1,45 @@
+<TimeTableSubject RefId="D3E34B359D75101A8C3D00AA001A1652">
+  <SubjectLocalId>07AR</SubjectLocalId>
+  <AcademicYear>
+    <Code>7</Code>
+  </AcademicYear>
+  <CourseLocalId>WA_07AR</CourseLocalId>
+  <SchoolCourseInfoRefId>12CF5C18AE5E462A12E635EADBD6F311</SchoolCourseInfoRefId>
+  <SubjectShortName>7 ART</SubjectShortName>
+  <SubjectLongName>Year 7 Art</SubjectLongName>
+  <SubjectType>E</SubjectType>
+  <ProposedMinClassSize>25</ProposedMinClassSize>
+  <SchoolInfoRefId>D9CF5C180E5E462A980635EADBD6F3EE</SchoolInfoRefId>
+  <SchoolLocalId>4202</SchoolLocalId>
+  <SchoolYear>2009</SchoolYear>
+</TimeTableSubject>
+<TimeTableSubject RefId="ABC123359D75101A8C3D00AA001A1652">
+  <SubjectLocalId>M01</SubjectLocalId>
+  <AcademicYear>
+    <Code>2</Code>
+  </AcademicYear>
+  <CourseLocalId>WA_YR1MTH</CourseLocalId>
+  <SchoolCourseInfoRefId>12CF5C18AE5E462A12E635EADBD6F311</SchoolCourseInfoRefId>
+  <SubjectShortName>2 MATH</SubjectShortName>
+  <SubjectLongName>Year 2 Maths</SubjectLongName>
+  <SubjectType>E</SubjectType>
+  <ProposedMinClassSize>20</ProposedMinClassSize>
+  <SchoolInfoRefId>01AF5C180E5E462A980635EADBD6F3EE</SchoolInfoRefId>
+  <SchoolLocalId>4202</SchoolLocalId>
+  <SchoolYear>2011</SchoolYear>
+</TimeTableSubject>
+<TimeTableSubject RefId="FFF34B359D75101A8C3D00AA001A0011">
+  <SubjectLocalId>03MU</SubjectLocalId>
+  <AcademicYear>
+    <Code>3</Code>
+  </AcademicYear>
+  <CourseLocalId>WA_03MU</CourseLocalId>
+  <SchoolCourseInfoRefId>56CF5778AE5E462A12E635EADBD6F30A</SchoolCourseInfoRefId>
+  <SubjectShortName>3 MU</SubjectShortName>
+  <SubjectLongName>Year 3 Music</SubjectLongName>
+  <SubjectType>E</SubjectType>
+  <ProposedMinClassSize>10</ProposedMinClassSize>
+  <SchoolInfoRefId>D9CF5C180E5E462A980635EADBD6F3EE</SchoolInfoRefId>
+  <SchoolLocalId>4202</SchoolLocalId>
+  <SchoolYear>2010</SchoolYear>
+</TimeTableSubject>

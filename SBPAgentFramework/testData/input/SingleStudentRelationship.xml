@@ -1,0 +1,25 @@
+<StudentContactRelationship StudentPersonalRefId="02834EA9EDA12090347F83297E1C290D" StudentContactPersonalRefId="6472B2610947583A463DBB345291B001">
+  <Relationship>
+    <Code>01</Code>
+  </Relationship>
+  <HouseholdList>
+    <Household>FamilyA</Household>
+    <Household>FamilyB</Household>
+  </HouseholdList>
+  <ContactFlags>
+    <ParentLegalGuardian>Y</ParentLegalGuardian>
+    <PickupRights>Y</PickupRights>
+    <LivesWith>N</LivesWith>
+    <AccessToRecords>U</AccessToRecords>
+    <EmergencyContact>Y</EmergencyContact>
+    <HasCustody>N</HasCustody>
+    <DisciplinaryContact>N</DisciplinaryContact>
+    <PrimaryCareProvider>U</PrimaryCareProvider>
+    <FeesBilling>Y</FeesBilling>
+    <FamilyMail>Y</FamilyMail>
+    <InterventionOrder>N</InterventionOrder>
+  </ContactFlags>
+  <MainlySpeaksEnglishAtHome>U</MainlySpeaksEnglishAtHome>
+  <ContactSequence>1</ContactSequence>
+  <ContactSequenceSource>P</ContactSequenceSource>
+</StudentContactRelationship>

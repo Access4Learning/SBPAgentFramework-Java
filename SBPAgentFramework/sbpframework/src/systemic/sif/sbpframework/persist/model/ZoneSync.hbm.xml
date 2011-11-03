@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="systemic.sif.sbpframework.persist.model.ObjectZoneSync" table="SCF_OBJECT_ZONE_SYNC">
+        <id name="id" type="long" column="OBJECT_ZONE_SYNC_ID">
+            <generator class="native"/>
+        </id>
+        <property name="objectName" column="SIF_OBJECT_NAME" type="string" length="45"/>
+        <property name="zoneId" column="ZONE_ID" type="string" length="45"/>
+        <property name="agentId" column="AGENT_ID" type="string" length="45"/>
+        <property name="lastRequested" column="LAST_REQUESTED" type="date"/>
+    </class>
+</hibernate-mapping>

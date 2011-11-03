@@ -1,0 +1,97 @@
+<project name="SBPAgentFramework" basedir="." default="03-jar-lib">
+
+	<property name="project.basedir" value="${basedir}"/>
+
+	<!-- *************************** -->
+	<!-- Load default property files -->
+	<!-- *************************** -->
+	<property file="${project.basedir}/ant.properties"/>
+
+	<!-- ********************* -->
+	<!-- Environment Variables -->
+	<!-- ********************* -->
+	<property name="build.dir.name" value="build"/>
+	<property name="build.dir" value="${project.basedir}/${build.dir.name}"/>
+	<property name="dist.dir" value="${build.dir}/dist"/>
+	<property name="class.dir" value="${build.dir}/classes" />
+	<property name="lib.root.dir" value="${project.basedir}/lib" />
+	<property name="config.dir" value="${project.basedir}/config" />
+    <property name="buildversion" value="${locale}_${sifversion}-${project.version}" />
+    <property name="src.dir" value="${project.name}" />
+    <property name="jar.name" value="${project.name}" />
+	
+	<property name="verbose" value="true" />
+
+	<path id="classpath">
+		<fileset dir="${lib.root.dir}">
+			<include name="**/*.jar" />
+			<include name="**/*.zip" />
+		</fileset>
+		<pathelement path="${class.dir}" />
+	</path>
+
+	<!-- print some varaibles -->
+	<target name="00-env" description="Show Ant variables">
+		<echo message="project.basedir: ${project.basedir}"/>
+		<echo message="build.dir: ${build.dir}"/>
+		<echo message="dist.dir: ${dist.dir}"/>
+		<echo message="class.dir: ${class.dir}"/>
+		<echo message="lib.root.dir: ${lib.root.dir}"/>
+		<echo message="config.dir: ${config.dir}"/>
+        <echo message="javaversion: ${javaversion}"/>
+        <echo message="src.dir: ${src.dir}"/>
+        <echo message="jar.name: ${jar.name}"/>
+	</target>
+
+	<!-- Clean environment. -->
+	<target name="02-clean" description="Deletes the build directory">
+		<delete dir="${dist.dir}" />
+		<delete dir="${class.dir}" />
+	</target>
+
+	<!-- ***************** -->
+	<!-- Environment setup -->
+	<!-- ***************** -->
+	<target name="init">
+		<mkdir dir="${class.dir}"/>
+		<mkdir dir="${dist.dir}"/>
+	</target>
+
+	<!-- ******************************* -->
+	<!-- Compile Targets for Environment -->
+	<!-- ******************************* -->
+	<target name="compile-src" depends="init" description="Compile all sources">
+		<echo message="Compile: ${project.basedir}/${src.dir}/src"/>
+
+		<!-- Compile source -->
+		<javac destdir="${class.dir}" source="${javaversion}" target="${javaversion}" debug="on">
+			<classpath refid="classpath" />
+			<src path="${project.basedir}/${src.dir}/src" />
+		</javac>
+
+		<!-- copy all non-java files across -->
+		<copy todir="${class.dir}">
+			<fileset dir="${project.basedir}/${src.dir}/src">
+				<exclude name="**/*.java"/>
+			</fileset>
+		</copy>
+	</target>
+
+	<!-- Main Jar Target -->
+	<target name="03-jar-lib" depends="compile-src" description="Create JAR files for all components">
+		<echo message="Jar: ${project.basedir}/${src.dir}"/>
+		<jar destfile="${dist.dir}/${jar.name}-${buildversion}.jar">
+			<!-- Classes and resources -->
+			<fileset dir="${class.dir}" includes="**/${src.dir}/** com/**" excludes="**/readme.txt"/>
+		</jar>
+	</target>
+
+	<target name="jar-config">
+		<echo message="Jar: ${dist.dir}/config.jar"/>
+		<mkdir dir="${dist.dir}"/>
+		<jar destfile="${dist.dir}/config.jar">
+			<fileset dir="${config.dir}" includes="*.*" excludes="preferences.properties"/>
+		</jar>
+	</target>
+
+</project>

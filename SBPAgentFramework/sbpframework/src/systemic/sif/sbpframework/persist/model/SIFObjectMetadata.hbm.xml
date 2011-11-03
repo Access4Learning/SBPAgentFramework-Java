@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+
+    <class name="systemic.sif.sbpframework.persist.model.SIFObject" table="SCF_OBJECT" mutable="false">
+        <id name="name" column="SIF_OBJECT_NAME" type="string" length="45">
+            <generator class="assigned"/>
+        </id>
+        <property name="keySeparator" column="KEY_SEPARATOR" type="string" length="3"/>
+        <property name="defaultExpiryInMinutes" column="DEFAULT_EXPIRY_IN_MINUTES" type="integer"/>
+        <property name="defaultExpiryStrategy" column="DEFAULT_EXPIRY_STRATEGY" type="string" length="45"/>
+        <set name="objectKeys" lazy="false">
+            <key column="SIF_OBJECT_NAME"/>
+            <one-to-many class="systemic.sif.sbpframework.persist.model.SIFObjectKey"/>
+        </set>
+        <set name="dependentObjects" lazy="false">
+            <key column="SIF_OBJECT_NAME"/>
+            <one-to-many class="systemic.sif.sbpframework.persist.model.DependentObjectInfo" not-found="ignore"/>
+        </set>
+    </class>
+    
+    <class name="systemic.sif.sbpframework.persist.model.SIFObjectKey" table="SCF_OBJECT_KEY" mutable="false">
+        <id name="id" column="OBJECT_KEY_ID" type="long">
+            <generator class="assigned"/>
+        </id>
+        <property name="xpath" column="XPATH_TO_KEY" type="string" length="256"/>
+        <property name="sortOrder" column="SORT_ORDER" type="integer" length="45"/>
+    </class>
+    
+    <class name="systemic.sif.sbpframework.persist.model.DependentObjectInfo" table="SCF_DEPENDENCY_INFO" mutable="false">
+        <id name="id" column="DEPENDENCY_INFO_ID" type="long">
+            <generator class="assigned"/>
+        </id>
+        <many-to-one name="parentObject" column="PARENT_SIF_OBJECT_NAME" class="systemic.sif.sbpframework.persist.model.SIFObject" lazy="false"/>       
+        <property name="listOfObjects" column="MULTIPLE" type="boolean"/>
+        <property name="xpathToList" column="XPATH_TO_LIST" type="string" length="256"/>
+        <set name="keyInfoList" lazy="false">
+            <key column="DEPENDENCY_INFO_ID"/>
+            <one-to-many class="systemic.sif.sbpframework.persist.model.DependentKeyInfo"/>
+        </set>      
+    </class>    
+
+    <class name="systemic.sif.sbpframework.persist.model.DependentKeyInfo" table="SCF_DEPENDENCY_KEY_INFO" mutable="false">
+        <id name="id" column="DEPENDENCY_KEY_INFO_ID" type="long">
+            <generator class="assigned"/>
+        </id>
+        <property name="xpath" column="XPATH_TO_KEY" type="string" length="256"/>
+        <property name="sortOrder" column="SORT_ORDER" type="integer" length="45"/>
+    </class>    
+    
+</hibernate-mapping>

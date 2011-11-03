@@ -1,0 +1,8 @@
+systemic.sif.sbpframework.agent
+systemic.sif.sbpframework.common.utils
+systemic.sif.sbpframework.persist.common
+systemic.sif.sbpframework.persist.dao
+systemic.sif.sbpframework.persist.model
+systemic.sif.sbpframework.persist.servcie
+systemic.sif.sbpframework.publisher
+systemic.sif.sbpframework.subscriber

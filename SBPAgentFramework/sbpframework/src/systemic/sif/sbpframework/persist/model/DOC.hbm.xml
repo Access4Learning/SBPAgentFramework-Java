@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+
+    <class name="systemic.sif.sbpframework.persist.model.DOCache" table="SCF_DO_CACHE">
+        <id name="id" column="DO_CACHE_ID" type="long">
+            <generator class="native"/>
+        </id>
+        <property name="sifObjectName" column="SIF_OBJECT_NAME" type="string" length="45"/>
+        <property name="objectKeyValue" column="OBJECT_KEY_VALUE" type="string" length="256"/>
+        <property name="objectXML" column="OBJECT_XML" type="string"/>
+        <property name="isEvent" column="IS_EVENT" type="boolean"/>
+        <property name="eventType" column="EVENT_TYPE" type="string"/>
+        <property name="receivedOn" column="RECEIVED_DATE" type="timestamp"/>
+        <property name="agentId" column="AGENT_ID" type="string" length="45"/>
+        <property name="applicationId" column="APPLICATION_ID" type="string" length="45"/>
+        <property name="zoneId" column="ZONE_ID" type="string" length="45"/>
+        <property name="remainingDependencies" column="DEPENENCY_REMAINING" type="integer"/>
+        <property name="expiryDate" column="EXPIRY_DATE" type="timestamp"/>
+        <property name="expiryStrategy" column="EXPIRY_STRATEGY" type="string" length="45"/>
+        <set name="dependentObjects" table="SCF_DOC_OBJECT_LIST" cascade="save-update" lazy="true">
+            <key column="DO_CACHE_ID"/>
+            <many-to-many column="DEPENDENT_OBJECT_ID" class="systemic.sif.sbpframework.persist.model.DOCObject"/>
+        </set>
+    </class>
+
+    <class name="systemic.sif.sbpframework.persist.model.DOCObject" table="SCF_DOC_OBJECT">
+        <id name="id" column="DOC_OBJECT_ID" type="long">
+            <generator class="native"/>
+        </id>
+        <property name="sifObjectName" column="SIF_OBJECT_NAME" type="string" length="45"/>
+        <property name="objectKeyValue" column="OBJECT_KEY_VALUE" type="string" length="256"/>
+        <property name="agentId" column="AGENT_ID" type="string" length="45"/>
+        <property name="applicationId" column="APPLICATION_ID" type="string" length="45"/>
+        <property name="requested" column="REQUESTED" type="boolean"/>
+        <property name="requestDate" column="REQUEST_DATE" type="timestamp"/>
+        <property name="zoneId" column="ZONE_ID" type="string" length="45"/>
+        <set name="parents" table="SCF_DOC_OBJECT_LIST" cascade="none" lazy="true">
+            <key column="DEPENDENT_OBJECT_ID"/>
+            <many-to-many column="DO_CACHE_ID" class="systemic.sif.sbpframework.persist.model.DOCache"/>
+        </set>
+        
+    </class>
+</hibernate-mapping>
