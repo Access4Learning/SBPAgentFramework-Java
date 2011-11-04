@@ -26,7 +26,6 @@ import java.util.TimerTask;
 
 import javax.persistence.PersistenceException;
 
-import openadk.library.ADKException;
 import openadk.library.ElementDef;
 import openadk.library.EventAction;
 import openadk.library.Query;
@@ -38,18 +37,26 @@ import systemic.sif.sbpframework.persist.model.DOCObject;
 import systemic.sif.sbpframework.persist.model.DOCache;
 import systemic.sif.sbpframework.persist.model.SIFObjectKey;
 import systemic.sif.sbpframework.persist.servcie.DOCService;
-import systemic.sif.sbpframework.persist.servcie.SIFSyncService;
 import systemic.sif.sifcommon.mapping.MappingInfo;
-import systemic.sif.sifcommon.subscriber.BaseSubscriber;
 
 /**
+ * This class implements some of the functionality defined in the Australian SBP. This are all infrastructure level
+ * functions and include: Start-up Sync Control through a DB and a dependent Object cache. For details please refer to
+ * the SBP Agent Framework Developer's Guide.<p><p>
+ * 
+ * <b>Note:</b><p>
+ * Subscribers that are part of the SBP must extend this SBPBaseSubscriber. If your agent deals with other SIF objects 
+ * than the ones defined in the SBP then you should extends the SBPNoDOCSubscriber class for these objects and not this
+ * class. If you use this class for any other SIF objects than defined in the SBP the behaviour is unknown, most likely
+ * will cause your agent to crash.
+ * 
  * @author Joerg Huber
  *
  */
-public abstract class SBPBaseSubscriber extends BaseSubscriber
+public abstract class SBPBaseSubscriber extends SyncSubscriber
 {
 	private static final int MILISEC = 1000;
-	private static final String BANNER = "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+//	private static final String BANNER = "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
 
 	private static DOCacheProperties cacheProperties = DOCacheProperties.getDOCacheProperties();
 
@@ -74,12 +81,14 @@ public abstract class SBPBaseSubscriber extends BaseSubscriber
 	 * this method successfully and therefore the availability of this parameter.<p><p>
 	 * 
 	 * Example of parameters: StudentSchoolEnrollment
+	 * <code>
 	 * <StudentSchoolEnrollment RefId="A8C3D3E34B359D75101D00AA001A1652">
   	 *   <StudentPersonalRefId>D3E34B359D75101A8C3D00AA001A1652</StudentPersonalRefId>
      *   <SchoolInfoRefId>A4E33E359D99101A8C3D00AA001BB76E</SchoolInfoRefId>
      *   <MembershipType>01</MembershipType>
 	 *    .....
 	 * </StudentSchoolEnrollment>
+	 * </code>
 	 * <p><p>
 	 * For the above example object the 'sifObject' parameter would be StudentSchoolEnrollment object.
 	 * The 'doesObjectExistInTargetSystem()' method would be called twice for the above object by the 
@@ -108,13 +117,10 @@ public abstract class SBPBaseSubscriber extends BaseSubscriber
 	 */
 	public SBPBaseSubscriber(String subscriberID, ElementDef dtd)
 	{
-        super(subscriberID);
-		setDtd(dtd);
+        super(subscriberID, dtd);
 		
 		pendingObjectRequestTask();
 		processObjectsWithoutDependenciesTask();
-
-        logger.debug(BANNER+getClass().getSimpleName()+" Subscriber created for object = '"+getDtd().name()+"'."+BANNER);
 	}
 	
 	/*--------------------------------------------------------------------------------*/
@@ -183,41 +189,6 @@ public abstract class SBPBaseSubscriber extends BaseSubscriber
 		// queue.
     	return true;		
 	}
-
-	
-	/*
-	 * This method overrides the default sync behaviour of the SIFCommon Framework Base Subscriber.
-	 * @see systemic.sif.sifcommon.subscriber.BaseSubscriber#sync(openadk.library.Zone)
-	 */
-    @Override
-    public void sync(Zone zone) throws ADKException
-    {
-        try
-        {
-        	SIFSyncService service = new SIFSyncService();
-            if (service != null)
-            {
-                // Test if there are any sync required.
-                boolean requireSync = service.requiresSyncForObjectInZone(getDtd().name(), getAgentID(), zone.getZoneId());
-    
-                logger.info(BANNER+getClass().getSimpleName()+".sync() for agent = '" + getAgentID() + "', object = '"+getDtd().name()+"' in zone = '"+zone.getZoneId()+"' required: "+(requireSync ? "YES" : "NO")+BANNER);
-                if (requireSync)
-                {
-                    Query query = new Query(getDtd());
-                    query.setSIFVersions(getAgentConfig().getVersion());
-            		addToInitialSyncQuery(query, zone); // Add any query conditions you may have
-                    zone.query(query);
-                    
-                    // Now update the Sync info
-                    service.markSIFZoneAsSyncedForObject(getDtd().name(), getAgentID(), zone.getZoneId());
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.error(BANNER+"Sync for SIF Object '"+getDtd().name()+"' in zone '"+zone.getZoneId()+"' failed: " + ex.getMessage()+BANNER);
-        }        
-    }
 
 	/*-----------------------------------------------------*/
 	/*- Setup to run Housekeeping task at give intervals. -*/
