@@ -11,6 +11,6 @@
         <property name="objectName" column="SIF_OBJECT_NAME" type="string" length="45"/>
         <property name="zoneId" column="ZONE_ID" type="string" length="45"/>
         <property name="agentId" column="AGENT_ID" type="string" length="45"/>
-        <property name="lastRequested" column="LAST_REQUESTED" type="date"/>
+        <property name="lastRequested" column="LAST_REQUESTED" type="timestamp"/>
     </class>
 </hibernate-mapping>
