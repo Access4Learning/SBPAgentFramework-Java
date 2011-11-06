@@ -196,44 +196,51 @@ public abstract class SBPBaseSubscriber extends SyncSubscriber
     
 	/*
 	 * This method schedules the Request of Pending Object task to be run at given intervals.
+	 * Note: Refer to comments in requestDependentObjects() method.
 	 */
 	private void pendingObjectRequestTask()
 	{
-		int delay = cacheProperties.getRequestStartupDelayInSec(getDtd().name(), 60) * MILISEC;   // delay for 15 sec.
-		int period = cacheProperties.getRequestFreqInSec(getDtd().name(), 60) * MILISEC;  // repeat every 2 minutes.
-        logger.info(BANNER+getClass().getSimpleName()+".pendingObjectRequestTask() for Object = '" + getDtd().name() + "'. Startup Delay/Frequency in Millisec: "+delay+"/"+period+BANNER);
-		
-		Timer timer = new Timer();
-		timer.scheduleAtFixedRate(
-			new TimerTask() 
-			{
-				public void run() 
+    	if (metadataCache.isDependedUpon(getDtd().name()))
+    	{
+			int delay = cacheProperties.getRequestStartupDelayInSec(getDtd().name(), 60) * MILISEC;   // delay for 15 sec.
+			int period = cacheProperties.getRequestFreqInSec(getDtd().name(), 60) * MILISEC;  // repeat every 2 minutes.
+	        logger.info(BANNER+getClass().getSimpleName()+".pendingObjectRequestTask() for Object = '" + getDtd().name() + "'. Startup Delay/Frequency in Millisec: "+delay+"/"+period+BANNER);
+			
+			Timer timer = new Timer();
+			timer.scheduleAtFixedRate(
+				new TimerTask() 
 				{
-					requestDependentObjects();
-				}
-			}, delay, period);
+					public void run() 
+					{
+						requestDependentObjects();
+					}
+				}, delay, period);
+    	}
 	}
 	
 	
 	/*
 	 * This method schedules the removal of Cache Object that have all dependencies removed. Run at given intervals.
-	 * Note: This 
+	 * Note: Refer to comments in processObjectsWithoutDependencies() method.
 	 */
 	private void processObjectsWithoutDependenciesTask()
 	{
-		int delay = cacheProperties.getResolvedStartupDelayInSec(getDtd().name(), 60) * MILISEC;   // delay for 15 sec.
-		int period = cacheProperties.getResolvedFreqInSec(getDtd().name(), 60) * MILISEC;  // repeat every 2 minutes.
-        logger.info(BANNER+getClass().getSimpleName()+".processObjectsWithoutDependenciesTask() for object = '" + getDtd().name() + "'. Startup Delay/Frequency in Millisec: "+delay+"/"+period+BANNER);
-
-        Timer timer = new Timer();
-		timer.scheduleAtFixedRate(
-			new TimerTask() 
-			{
-				public void run() 
+    	if (metadataCache.hasDependencies(getDtd().name()))
+    	{
+			int delay = cacheProperties.getResolvedStartupDelayInSec(getDtd().name(), 60) * MILISEC;   // delay for 15 sec.
+			int period = cacheProperties.getResolvedFreqInSec(getDtd().name(), 60) * MILISEC;  // repeat every 2 minutes.
+	        logger.info(BANNER+getClass().getSimpleName()+".processObjectsWithoutDependenciesTask() for object = '" + getDtd().name() + "'. Startup Delay/Frequency in Millisec: "+delay+"/"+period+BANNER);
+	
+	        Timer timer = new Timer();
+			timer.scheduleAtFixedRate(
+				new TimerTask() 
 				{
-					processObjectsWithoutDependencies();
-				}
-			}, delay, period);
+					public void run() 
+					{
+						processObjectsWithoutDependencies();
+					}
+				}, delay, period);
+    	}
 	}
 
 	/*--------------------------------------------------*/
@@ -244,80 +251,100 @@ public abstract class SBPBaseSubscriber extends SyncSubscriber
      * Sends a SIF Query for all dependent objects that are in the cache for this subscriber and application.
      * This will iterate through all zones of this agent to ensure that all dependent objects that have been
      * received from various zones are requested.
+     * This task must only run if this subscriber is responsible for a SIF Object that has other SIF objects
+     * with a dependency on this object. For example the StudentPersonal is such an object because a number of 
+     * other SIF objects depend upon the StudentPersonal such as the StudentSchoolEnrollment, 
+     * StudentContactRelationship etc.
+     * 
      */
     private void requestDependentObjects()
     {
-		logger.debug(BANNER+getClass().getSimpleName()+" Subscriber attempts to request pending objects...: "+new Date()+BANNER);
-    	try
+    	if (metadataCache.isDependedUpon(getDtd().name()))
     	{
-	    	for (Zone zone : getZones())
+			logger.debug(BANNER+getClass().getSimpleName()+" Subscriber attempts to request pending objects...: "+new Date()+BANNER);
+	    	try
 	    	{
-	    		List<DOCObject> objectToRequest = service.getNotYetRequestedObjects(getDtd().name(), getApplicationID(), zone.getZoneId());
-	    		for (DOCObject docObj : objectToRequest)
-	    		{
-	    			// Use an inner try-block so that individually failed query requests don't stop others of being issued.
-	    			try
-	    			{
-		                Query query = SIFObjectUtils.makeQueryFromXPathValueList(getDtd(), getAgentConfig().getVersion(), docObj.getKeyForDependentObject());
-		                zone.query(query);// Send the query to the Zone.
-		                
-		                // Now we need to update the docObject to indicate that query has been issued.
-		                service.markDependentObjectAsRequested(docObj, getAgentID(), zone.getZoneId());
+		    	for (Zone zone : getZones())
+		    	{
+		    		List<DOCObject> objectToRequest = service.getNotYetRequestedObjects(getDtd().name(), getApplicationID(), zone.getZoneId());
+		    		for (DOCObject docObj : objectToRequest)
+		    		{
+		    			// Use an inner try-block so that individually failed query requests don't stop others of being issued.
+		    			try
+		    			{
+			                Query query = SIFObjectUtils.makeQueryFromXPathValueList(getDtd(), getAgentConfig().getVersion(), docObj.getKeyForDependentObject());
+			                zone.query(query);// Send the query to the Zone.
+			                
+			                // Now we need to update the docObject to indicate that query has been issued.
+			                service.markDependentObjectAsRequested(docObj, getAgentID(), zone.getZoneId());
+			    		}
+		    			catch (Exception ex)
+		    			{
+		    				logger.error("Failed to issue query for Cached Object:\n"+docObj, ex);
+		    			}
 		    		}
-	    			catch (Exception ex)
-	    			{
-	    				logger.error("Failed to issue query for Cached Object:\n"+docObj, ex);
-	    			}
-	    		}
+		    	}
+	    	}
+	    	catch (Exception ex) //  should only be IllegalArgumentException, PersistenceException
+	    	{
+				logger.error("Failed to retrive lis of not yet requested objects for subscriber: "+getDtd().name(), ex);    		
 	    	}
     	}
-    	catch (Exception ex) //  should only be IllegalArgumentException, PersistenceException
-    	{
-			logger.error("Failed to retrive lis of not yet requested objects for subscriber: "+getDtd().name(), ex);    		
-    	}
+//    	else
+//    	{
+//			logger.debug(BANNER+getClass().getSimpleName()+" Subscriber is not required to request pending objects because no objects depend on this one: "+new Date()+BANNER);    		
+//    	}
     }
     
     /*
      * Should be called every so often. This method will check if there are cached objects that have no 
      * dependencies any more. If so the object can be processed by this subscriber and then removed from 
-     * the cache.
+     * the cache. This process is only required for objects that have dependencies such as StaffAssignment.
+     * For objects without dependencies such as StudentPersonal there is no need to run this method.
      */
     private void processObjectsWithoutDependencies()
     {
-		logger.debug(BANNER+getClass().getSimpleName()+" Subscriber attempts to process objects with no remaining dependencies...: "+new Date()+BANNER);
-    	List<DOCache> cachedObjectList = null;
-    	try
+    	if (metadataCache.hasDependencies(getDtd().name()))
     	{
-	        cachedObjectList = service.getObjectsWithoutDependencies(getDtd().name(), getApplicationID(), getAgentID());
-    	}
-    	catch (Exception ex) //  should only be IllegalArgumentException, PersistenceException
-    	{
-			logger.error("Failed to retrive list of Cached Objects without any dependencies for subscriber: "+getDtd().name(), ex);    		
-			cachedObjectList = null;
-    	}
-    	if (cachedObjectList != null)
-    	{
-    		for (DOCache cachedObject : cachedObjectList)
-    		{
-    			SIFDataObject sifObject =  SIFObjectUtils.getSIFObjectFromXML(cachedObject.getObjectXML());
-    			if (sifObject != null)
-    			{
-	    			if (cachedObject.getIsEvent()) // Event Object
+			logger.debug(BANNER+getClass().getSimpleName()+" Subscriber attempts to process objects with no remaining dependencies...: "+new Date()+BANNER);
+	    	List<DOCache> cachedObjectList = null;
+	    	try
+	    	{
+		        cachedObjectList = service.getObjectsWithoutDependencies(getDtd().name(), getApplicationID(), getAgentID());
+	    	}
+	    	catch (Exception ex) //  should only be IllegalArgumentException, PersistenceException
+	    	{
+				logger.error("Failed to retrive list of Cached Objects without any dependencies for subscriber: "+getDtd().name(), ex);    		
+				cachedObjectList = null;
+	    	}
+	    	if (cachedObjectList != null)
+	    	{
+	    		for (DOCache cachedObject : cachedObjectList)
+	    		{
+	    			SIFDataObject sifObject =  SIFObjectUtils.getSIFObjectFromXML(cachedObject.getObjectXML());
+	    			if (sifObject != null)
 	    			{
-	    				pushSIFEventToProcessQueue(sifObject, getZoneByID(cachedObject.getZoneId()), null, EventAction.valueOf(cachedObject.getEventType()));
+		    			if (cachedObject.getIsEvent()) // Event Object
+		    			{
+		    				pushSIFEventToProcessQueue(sifObject, getZoneByID(cachedObject.getZoneId()), null, EventAction.valueOf(cachedObject.getEventType()));
+		    			}
+		    			else // Response Object
+		    			{
+		    				pushSIFObjectToProcessQueue(sifObject, getZoneByID(cachedObject.getZoneId()), null);
+		    			}
+		    			service.removeCachedObject(cachedObject);
 	    			}
-	    			else // Response Object
+	    			else
 	    			{
-	    				pushSIFObjectToProcessQueue(sifObject, getZoneByID(cachedObject.getZoneId()), null);
+	    				logger.error("Failed to push the cached object to the processing queues. See previous error log entry for details. Cached object with issue:\n"+cachedObject);
 	    			}
-	    			service.removeCachedObject(cachedObject);
-    			}
-    			else
-    			{
-    				logger.error("Failed to push the cached object to the processing queues. See previous error log entry for details. Cached object with issue:\n"+cachedObject);
-    			}
-    		}
+	    		}
+	    	}
     	}
+//    	else
+//    	{
+//			logger.debug(BANNER+getClass().getSimpleName()+" Subscriber does not need to process objects with no remaining dependencies because this Object does not have dependencies: "+new Date()+BANNER);
+//    	}
     }
     
     /*

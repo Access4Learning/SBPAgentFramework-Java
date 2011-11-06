@@ -19,6 +19,7 @@
 package systemic.sif.sbpframework.common.utils;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -38,8 +39,11 @@ public class SIFObjectMetadataCache
 {
 	protected static final Logger logger = Logger.getLogger(SIFObjectMetadataCache.class);
 
-	  /* The definition of the cache structure. */
+	/* The definition of the cache structure. */
 	private HashMap<String, SIFObject> sifObjectMetadataCache = null;
+	
+	private HashSet<String> objectsDependUpon = null;
+
 	
 	/* Singleton definition for SIFObjectMetadataCache object */
 	private static SIFObjectMetadataCache instance = null;
@@ -104,10 +108,27 @@ public class SIFObjectMetadataCache
 		return false;
 	}
 	
+	/**
+	 * This method returns true if the given SIF Object given by its name is being depended upon, meaning there
+	 * are other SIF objects that have a dependency on this object. For example the StudentPersonal is such an
+	 * object because a number of other SIF objects depend upon the StudentPersonal such as the
+	 * StudentSchoolEnrollment, StudentContactRelationship etc.
+	 * If the object given by its name isn't being depended on by any other object then this method returns false.
+	 * 
+	 * @param sifObjectName The object name for which object the check shall be performed.
+	 * 
+	 * @return See description.
+	 */
+	public boolean isDependedUpon(String sifObjectName)
+	{
+		return objectsDependUpon.contains(sifObjectName);
+	}
+	
 	@Override
 	public String toString()
 	{
-		return sifObjectMetadataCache.toString();
+		return "Metadata Info:\n"+sifObjectMetadataCache.toString()+
+			   "\nDependend Upon Objects:\n"+objectsDependUpon;
 	}
 	
 	/*---------------------*/
@@ -116,10 +137,11 @@ public class SIFObjectMetadataCache
 	private SIFObjectMetadataCache()
 	{
 		sifObjectMetadataCache =  new HashMap<String, SIFObject>();
-		loadCache(sifObjectMetadataCache);		
+		objectsDependUpon = new HashSet<String>();
+		loadCache(sifObjectMetadataCache, objectsDependUpon);		
 	}
 	
-	private void loadCache(HashMap<String, SIFObject> cache) throws IllegalArgumentException, PersistenceException
+	private void loadCache(HashMap<String, SIFObject> cache, HashSet<String> dependUponSet) throws IllegalArgumentException, PersistenceException
 	{
 		Timer timer = new Timer();
 		timer.start();
@@ -154,6 +176,17 @@ public class SIFObjectMetadataCache
 			}
 			cache.put(obj.getName(), obj);
 		}
+		
+		// Scan through the cache again and check which objects are being depended upon and store them in the
+		// hashset.
+		for (SIFObject obj : cache.values())
+		{
+			for (DependentObjectInfo depObj : obj.getDependentObjects())
+			{
+				dependUponSet.add(depObj.getParentObject().getName());
+			}
+		}		
+		
 		timer.finish();
 		logger.debug("SIF Object Metadata Cache loaded. Time taken: "+timer.timeTaken()+"ms");
 	}

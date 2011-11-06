@@ -11,7 +11,8 @@ public class HibernateUtil
 	{
 		try
 		{
-			sessionFactory = new Configuration().configure().buildSessionFactory();
+			//sessionFactory = new Configuration().configure().buildSessionFactory();
+		    sessionFactory = new  Configuration().configure("sbp.hibernate.cfg.xml").buildSessionFactory();		
 		}
 		catch (Exception e)
 		{

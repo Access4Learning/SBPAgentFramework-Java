@@ -18,7 +18,6 @@
 
 package systemic.sif.sbpframework.persist.servcie;
 
-import org.hibernate.Session;
 import org.hibernate.Transaction;
 
 import systemic.sif.sbpframework.persist.dao.BaseDAO;
@@ -30,7 +29,7 @@ import systemic.sif.sbpframework.persist.dao.BaseDAO;
 public abstract class DBService
 {
 	private Transaction tx = null;
-	private Session session = null;
+//	private Session session = null;
 	
 	public abstract BaseDAO getDAO();
 	
@@ -53,22 +52,22 @@ public abstract class DBService
 	public void commit()
 	{
 		tx.commit();
-		if (session != null)
-		{
-			session.close();
-			session = null;
-		}
+//		if (session != null)
+//		{
+//			session.close();
+//			session = null;
+//		}
 	}
 	
 	/* commits changes and finalises transaction */
 	public void rollback()
 	{
 		tx.rollback();
-		if (session != null)
-		{
-			session.close();
-			session = null;
-		}
+//		if (session != null)
+//		{
+//			session.close();
+//			session = null;
+//		}
 	}
 	
 	public void loadSubObject(Object proxy)

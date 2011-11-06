@@ -22,6 +22,7 @@ import openadk.library.ADKException;
 import openadk.library.ElementDef;
 import openadk.library.Query;
 import openadk.library.Zone;
+import systemic.sif.sbpframework.common.utils.SIFObjectMetadataCache;
 import systemic.sif.sbpframework.persist.servcie.SIFSyncService;
 import systemic.sif.sifcommon.subscriber.BaseSubscriber;
 
@@ -42,6 +43,9 @@ import systemic.sif.sifcommon.subscriber.BaseSubscriber;
  */
 public abstract class SyncSubscriber extends BaseSubscriber
 {
+	/* There are some spots this metadata cache is required. */
+	protected SIFObjectMetadataCache metadataCache = SIFObjectMetadataCache.getCache();
+
 	protected static final String BANNER = "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
 
 	/*
