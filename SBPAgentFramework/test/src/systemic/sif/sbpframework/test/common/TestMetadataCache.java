@@ -66,6 +66,20 @@ public class TestMetadataCache
 		}		
 	}
 	
+	
+	private void testDependUpon(String objectName)
+	{
+		SIFObjectMetadataCache cache = SIFObjectMetadataCache.getCache();
+		if (cache == null)
+		{
+			System.out.println("Cannot retrieve Cache.");
+		}
+		else
+		{
+			System.out.println("Is "+objectName+" being depended Upon: "+cache.isDependedUpon(objectName));
+		}		
+	}
+
     public static void main(String[] args)
     {
         try
@@ -75,8 +89,10 @@ public class TestMetadataCache
 //        	tester.getMedatadataFor("StaffAssignment");
 //        	tester.testDependencies("StaffPersonal");
 //        	tester.testDependencies("TimeTableSubject");
-//        	tester.testDependencies("StudentContactRelationship");  
+//        	tester.testDependencies("StudentContactRelationship");
         	tester.displayContent();
+        	tester.testDependUpon("StudenntSchoolEnrollment");
+        	tester.testDependUpon("StudentPersonal");
         	
         	
         }

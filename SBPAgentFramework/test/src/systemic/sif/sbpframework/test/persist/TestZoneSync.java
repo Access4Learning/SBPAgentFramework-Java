@@ -36,7 +36,7 @@ public class TestZoneSync extends DAOBaseTest
 	{
 		if (row == null)
 		{
-			row = new ObjectZoneSync("StudentPersonal", "SIFDemo", "SubscriberAgent");
+			row = new ObjectZoneSync("StudentPersonal", "SIFDemo", "SubscribingAgent");
 		}
 		row.setLastRequested(new Date());
 		
@@ -54,7 +54,7 @@ public class TestZoneSync extends DAOBaseTest
 	{
 		startTransaction(dao);
 
-		ObjectZoneSync row = dao.retrieve("StudentPersonal", "SubscriberAgent", "SIFDemo");
+		ObjectZoneSync row = dao.retrieve("StudentPersonal", "SubscribingAgent", "SIFDemo");
 		
 		commit();
 		System.out.println("row = "+row);
@@ -68,7 +68,7 @@ public class TestZoneSync extends DAOBaseTest
         {
         	TestZoneSync tester = new TestZoneSync();
         	ObjectZoneSync row = tester.getInfo();
-        	tester.insert(row);
+        	//tester.insert(row);
         	
         	tester.shutdown();
         }
