@@ -55,7 +55,6 @@ public abstract class SyncSubscriber extends BaseSubscriber
 	{
         super(subscriberID);
 		setDtd(dtd);
-        logger.debug(BANNER+getClass().getSimpleName()+" Subscriber created for object = '"+getDtd().name()+"'."+BANNER);
 	}
 
 	/*

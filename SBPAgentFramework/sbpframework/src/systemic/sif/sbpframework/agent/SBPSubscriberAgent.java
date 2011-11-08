@@ -19,6 +19,7 @@
 package systemic.sif.sbpframework.agent;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -28,7 +29,9 @@ import systemic.sif.sbpframework.common.utils.DOCacheProperties;
 import systemic.sif.sbpframework.common.utils.SIFObjectMetadataCache;
 import systemic.sif.sbpframework.persist.common.HibernateUtil;
 import systemic.sif.sbpframework.persist.servcie.DOCService;
+import systemic.sif.sbpframework.subscriber.SBPBaseSubscriber;
 import systemic.sif.sifcommon.agent.SIFBaseAgent;
+import systemic.sif.sifcommon.subscriber.BaseSubscriber;
 import au.com.systemic.framework.utils.StringUtils;
 
 /**
@@ -88,16 +91,16 @@ public class SBPSubscriberAgent extends SIFBaseAgent
 		}
 	}
 
-	public String getApplicationID()
-	{
-		return getFrameworkProperties().getApplicationID(getAgentID(), null);
-	}
-	
 	public SBPSubscriberAgent(String agentID, String propertyFileName) throws Exception
 	{
 		super(agentID, propertyFileName);
 	}
 		
+    public String getApplicationID()
+    {
+        return getFrameworkProperties().getApplicationID(getAgentID(), null);
+    }
+    
 	/**
 	 * Default implementation does nothing. If custom objects are required then it is advised to
 	 * write a new agent that extends this agent and then override this method to the need of the agent.
@@ -144,20 +147,27 @@ public class SBPSubscriberAgent extends SIFBaseAgent
 			throw new IllegalArgumentException("No Application is defined for agent "+getAgentID()+". Set application id in SIFAgent.properties file. Agent cannot start.");			
 		}
 		
-		startupExpiredObjectManager();
-		
 		// If we get here then the metadata cache is initialised successfully and we can continue with the standard
 		// startup procedure.
 		super.startAgent();
+
+		// Start up all background house keeping processes
+		startupExpiredObjectManager();
+        pendingObjectRequestManager();
+        processObjectsWithoutDependenciesManager();
     }
+
+    /*-----------------------------------------*/
+    /*-- Scheduled Background Threads/Taasks --*/
+    /*-----------------------------------------*/
 
 	/**
 	 * This method schedules the Expired Cache Object Cleanup task to be run at given intervals.
 	 */
-	public void startupExpiredObjectManager()
+	private void startupExpiredObjectManager()
 	{
-		int delay = cacheProperties.getExpiryCheckStartupDelayInSec(60) * MILISEC;   // delay for 30 sec.
-		int period = cacheProperties.getExpiryCheckFreqMinutes(60) * 60 * MILISEC;  // repeat every hour (60sec*60min = 3600 sec)).
+		int delay = cacheProperties.getExpiryCheckStartupDelayInSec(60) * MILISEC;   // delay for some sec.
+		int period = cacheProperties.getExpiryCheckFreqMinutes(60) * 60 * MILISEC;  // repeat every so often (multiply with 60sec).
         logger.info(BANNER+getClass().getSimpleName()+".startupExpiredObjectManager() for agent = '" + getAgentID() + "'. Startup Delay/Frequency in Millisec: "+delay+"/"+period+BANNER);
 
 		Timer timer = new Timer();
@@ -166,15 +176,59 @@ public class SBPSubscriberAgent extends SIFBaseAgent
 			{
 				public void run() 
 				{
-					cleanUpExpiredObjects();
+					cleanUpExpiredObjectsTask();
 				}
 			}, delay, period);
 	}
 	
+	
+    /*
+     * This method schedules the Request of Pending Object task to be run at given intervals.
+     * Note: Refer to comments in requestDependentObjects() method.
+     */
+    private void pendingObjectRequestManager()
+    {
+        int delay = cacheProperties.getRequestStartupDelayInSec(60) * MILISEC;   // delay for 15 sec.
+        int period = cacheProperties.getRequestFreqInSec(60) * MILISEC;  // repeat every 2 minutes.
+        logger.info(BANNER+getClass().getSimpleName()+".pendingObjectRequestManager(). Startup Delay/Frequency in Millisec: "+delay+"/"+period+BANNER);
+        
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(
+            new TimerTask() 
+            {
+                public void run() 
+                {
+                    pendingObjectRequestTask();
+                }
+            }, delay, period);
+    }
+    
+    
+    /*
+     * This method schedules the removal of Cache Object that have all dependencies removed. Run at given intervals.
+     * Note: Refer to comments in processObjectsWithoutDependencies() method.
+     */
+    private void processObjectsWithoutDependenciesManager()
+    {
+        int delay = cacheProperties.getResolvedStartupDelayInSec(60) * MILISEC;   // delay for 15 sec.
+        int period = cacheProperties.getResolvedFreqInSec(60) * MILISEC;  // repeat every 2 minutes.
+        logger.info(BANNER+getClass().getSimpleName()+".processObjectsWithoutDependenciesManager(). Startup Delay/Frequency in Millisec: "+delay+"/"+period+BANNER);
+
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(
+            new TimerTask() 
+            {
+                public void run() 
+                {
+                    processObjectsWithoutDependenciesTask();
+                }
+            }, delay, period);
+    }
+	
 	/*--------------------------------------*/
 	/*-- Private methods to run in a Task --*/
 	/*--------------------------------------*/
-	private void cleanUpExpiredObjects()
+	private void cleanUpExpiredObjectsTask()
 	{
 		try
 		{
@@ -186,6 +240,40 @@ public class SBPSubscriberAgent extends SIFBaseAgent
 		{
 			logger.error("Failed to update/remove expired cached objects. See prvious error log entry for details.", ex);
 		}
+	}	
+	
+    /*
+     * This method iterates through all subscribers and calls the requestDependentObjects() method if the subscriber
+     * is a SBPBaseSubscriber.
+     * Note: Refer to comments in SBPBaseSubscriber.requestDependentObjects() method.
+     */
+    private void pendingObjectRequestTask()
+	{
+	    List<BaseSubscriber> subscribers = getInitialisedSubscribers();
+	    for (BaseSubscriber subsciber : subscribers)
+	    {
+	        if (subsciber instanceof SBPBaseSubscriber)
+	        {
+	            ((SBPBaseSubscriber)subsciber).requestDependentObjects();
+	        }
+	    }
+	}
+	
+    /*
+     * This method iterates through all subscribers and calls the processObjectsWithoutDependencies() method if the 
+     * subscriber is a SBPBaseSubscriber.
+     * Note: Refer to comments in SBPBaseSubscriber.processObjectsWithoutDependencies() method.
+     */
+    private void processObjectsWithoutDependenciesTask()
+	{
+        List<BaseSubscriber> subscribers = getInitialisedSubscribers();
+        for (BaseSubscriber subsciber : subscribers)
+        {
+            if (subsciber instanceof SBPBaseSubscriber)
+            {
+                ((SBPBaseSubscriber)subsciber).processObjectsWithoutDependencies();
+            }
+        }
 	}
 
 	/*---------------------*/
@@ -227,8 +315,7 @@ public class SBPSubscriberAgent extends SIFBaseAgent
 				System.out.println("ERROR Starting Agent: SBPSubscriberAgent could not be started. See previous output for details.");
 				ex.printStackTrace();
 			}
-			finally
-			// If startup is successful then this will never be reached.
+			finally	// If startup is successful then this will never be reached.
 			{
 				System.out.println("Exit SBPSubscriberAgent...");
 				if (agent != null)

@@ -37,12 +37,12 @@ public class TestDOCacheProperties
     		int period = cacheProperties.getExpiryCheckFreqMinutes(60);
             System.out.println("Startup Delay/Frequency for getExpiryCheckStartupDelayInSec/getExpiryCheckFreqMinutes: "+delay+"/"+period);
 
-    		delay = cacheProperties.getRequestStartupDelayInSec("StudentPersonal",60);
-    		period = cacheProperties.getRequestFreqInSec("StudentPersonal", 60);
+    		delay = cacheProperties.getRequestStartupDelayInSec(60);
+    		period = cacheProperties.getRequestFreqInSec(60);
             System.out.println("Startup Delay/Frequency for getRequestStartupDelayInSec/getRequestFreqInSec for object StudentPersonal: "+delay+"/"+period);
 
-    		delay = cacheProperties.getResolvedStartupDelayInSec("StudentPersonal", 60);
-    		period = cacheProperties.getResolvedFreqInSec("StudentPersonal", 60);
+    		delay = cacheProperties.getResolvedStartupDelayInSec(60);
+    		period = cacheProperties.getResolvedFreqInSec(60);
             System.out.println("Startup Delay/Frequency for getResolvedStartupDelayInSec/getResolvedFreqInSec for object StudentPersonal: "+delay+"/"+period);
 
             System.out.println("Ignore Dependency between TeachingGroup and StudentPersonal: "+cacheProperties.getIgnoreDependency("TeachingGroup", "StudentPersonal"));

@@ -19,6 +19,7 @@
 package systemic.sif.sbpframework.subscriber;
 
 import openadk.library.ElementDef;
+import systemic.sif.sbpframework.persist.model.SIFObject;
 
 /**
  * Subscribers for Objects that are not defined as part of the SBP must extend this class rather than the 
@@ -35,11 +36,24 @@ public abstract class SBPNoDOCSubscriber extends SyncSubscriber
 {
 
 	/**
-     * Default Constructor
+     * Default Constructor.<p>
+     * This class also checks if the SIF Object type it is initialised for would better be initialised with the 
+     * SBPBaseSubscriber. This is only applicable if the SIF Object type is known to the metadata cache and therefore
+     * should be handled by the DOC and mentioned class. In this case a warning will be logged and the subscriber is
+     * still initialised.
      */
     public SBPNoDOCSubscriber(String subscriberID, ElementDef dtd)
     {
 	    super(subscriberID, dtd);
+	    
+        // Check if the given SIF Object is should be using the SBPBaseSubscriber class.
+        SIFObject obj = metadataCache.getObjectMetadata(getDtd().name());
+        if (obj != null) // known to DOC
+        {
+            logger.warn("\n################################# WARNING ###################################\n"+getDtd().name()+" is a SIF Object Type that should be using the SBPBaseSubscriber class.\n#############################################################################\n");
+        }
+
+        logger.debug(BANNER+getClass().getSimpleName()+" Subscriber created for object = '"+getDtd().name()+"'."+BANNER);
     }
 
 }
