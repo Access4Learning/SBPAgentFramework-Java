@@ -61,17 +61,10 @@ public class DOCacheProperties
 		return instance;
 	}
 	
-	public String getExpiryStrategy(String sifObjectName, String defautltStrategy)
-	{
-		defautltStrategy = StringUtils.isEmpty(defautltStrategy) ? EXPIRE : defautltStrategy.trim();
-		return getValueForSIFObject("cache.expiry.strategy", sifObjectName, defautltStrategy);
-	}
 	
-	public int getExpiryMinutes(String sifObjectName, Integer defaultMinutes)
-	{
-		int defaultIntValue = getNoneNullOrZeroInteger(defaultMinutes, 120);
-		return getValueForSIFObject("cache.expiry.minutes", sifObjectName, defaultIntValue);
-	}
+	/*-------------------------------------------------------------------------------*/
+	/*-- Properties that are at agent level, ie. not dependent on SIF Object Type. --*/
+    /*-------------------------------------------------------------------------------*/
 	
 	public int getExpiryCheckFreqMinutes(Integer defaultMinutes)
 	{
@@ -85,30 +78,72 @@ public class DOCacheProperties
 		return getValue("cache.expiry.startup.delay.seconds", defaultIntValue);
 	}
 
-	public int getRequestFreqInSec(String sifObjectName, Integer defaultSeconds)
-	{
-		int defaultIntValue = getNoneNullOrZeroInteger(defaultSeconds, 60);
-		return getValueForSIFObject("cache.request.frequency.seconds", sifObjectName, defaultIntValue);
-	}
+    public int getRequestFreqInSec(Integer defaultSeconds)
+    {
+        int defaultIntValue = getNoneNullOrZeroInteger(defaultSeconds, 60);
+        return getValue("cache.request.frequency.seconds", defaultIntValue);
+    }
 
-	public int getRequestStartupDelayInSec(String sifObjectName, Integer defaultSeconds)
-	{
-		int defaultIntValue = getNoneNullOrZeroInteger(defaultSeconds, 60);
-		return getValueForSIFObject("cache.request.startup.delay.seconds", sifObjectName, defaultIntValue);
-	}
+    public int getRequestStartupDelayInSec(Integer defaultSeconds)
+    {
+        int defaultIntValue = getNoneNullOrZeroInteger(defaultSeconds, 60);
+        return getValue("cache.request.startup.delay.seconds", defaultIntValue);
+    }
 
-	public int getResolvedFreqInSec(String sifObjectName, Integer defaultSeconds)
-	{
-		int defaultIntValue = getNoneNullOrZeroInteger(defaultSeconds, 60);
-		return getValueForSIFObject("cache.resolved.frequency.seconds", sifObjectName, defaultIntValue);
-	}
+    public int getResolvedFreqInSec(Integer defaultSeconds)
+    {
+        int defaultIntValue = getNoneNullOrZeroInteger(defaultSeconds, 60);
+        return getValue("cache.resolved.frequency.seconds", defaultIntValue);
+    }
 
-	public int getResolvedStartupDelayInSec(String sifObjectName, Integer defaultSeconds)
-	{
-		int defaultIntValue = getNoneNullOrZeroInteger(defaultSeconds, 60);
-		return getValueForSIFObject("cache.resolved.startup.delay.seconds", sifObjectName, defaultIntValue);
-	}
+    public int getResolvedStartupDelayInSec(Integer defaultSeconds)
+    {
+        int defaultIntValue = getNoneNullOrZeroInteger(defaultSeconds, 60);
+        return getValue("cache.resolved.startup.delay.seconds", defaultIntValue);
+    }
+
+    /*--------------------------------------------------------------------------------*/
+    /*-- Properties that are at SIF Object Level, ie. dependent on SIF Object Type. --*/
+    /*--------------------------------------------------------------------------------*/
+    public String getExpiryStrategy(String sifObjectName, String defautltStrategy)
+    {
+        defautltStrategy = StringUtils.isEmpty(defautltStrategy) ? EXPIRE : defautltStrategy.trim();
+        return getValueForSIFObject("cache.expiry.strategy", sifObjectName, defautltStrategy);
+    }
+    
+    public int getExpiryMinutes(String sifObjectName, Integer defaultMinutes)
+    {
+        int defaultIntValue = getNoneNullOrZeroInteger(defaultMinutes, 120);
+        return getValueForSIFObject("cache.expiry.minutes", sifObjectName, defaultIntValue);
+    }
+
+//    public int getRequestFreqInSec(String sifObjectName, Integer defaultSeconds)
+//	{
+//		int defaultIntValue = getNoneNullOrZeroInteger(defaultSeconds, 60);
+//		return getValueForSIFObject("cache.request.frequency.seconds", sifObjectName, defaultIntValue);
+//	}
+//
+//	public int getRequestStartupDelayInSec(String sifObjectName, Integer defaultSeconds)
+//	{
+//		int defaultIntValue = getNoneNullOrZeroInteger(defaultSeconds, 60);
+//		return getValueForSIFObject("cache.request.startup.delay.seconds", sifObjectName, defaultIntValue);
+//	}
+//
+//	public int getResolvedFreqInSec(String sifObjectName, Integer defaultSeconds)
+//	{
+//		int defaultIntValue = getNoneNullOrZeroInteger(defaultSeconds, 60);
+//		return getValueForSIFObject("cache.resolved.frequency.seconds", sifObjectName, defaultIntValue);
+//	}
+//
+//	public int getResolvedStartupDelayInSec(String sifObjectName, Integer defaultSeconds)
+//	{
+//		int defaultIntValue = getNoneNullOrZeroInteger(defaultSeconds, 60);
+//		return getValueForSIFObject("cache.resolved.startup.delay.seconds", sifObjectName, defaultIntValue);
+//	}
 	
+    /*-----------------------*/
+    /*-- Other properties. --*/
+    /*-----------------------*/
 	public boolean getIgnoreDependency(String parentSifObjectName, String childSifObjectName)
 	{
 		if (StringUtils.isEmpty(parentSifObjectName) || StringUtils.isEmpty(childSifObjectName))
