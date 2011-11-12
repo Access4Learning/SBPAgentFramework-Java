@@ -5,4 +5,5 @@ systemic.sif.sbpframework.persist.dao
 systemic.sif.sbpframework.persist.model
 systemic.sif.sbpframework.persist.servcie
 systemic.sif.sbpframework.publisher
+systemic.sif.sbpframework.publisher.iterator
 systemic.sif.sbpframework.subscriber
