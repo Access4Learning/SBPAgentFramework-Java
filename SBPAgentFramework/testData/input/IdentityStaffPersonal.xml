@@ -1,0 +1,10 @@
+<Identity RefId="4286194F43ED43C18EE2F0A27C4BEF86">
+  <SIF_RefId SIF_RefObject="StaffPersonal">23B08571E4D645C3B82A3E52E5349925</SIF_RefId>
+  <AuthenticationSource>MSActiveDirectory</AuthenticationSource>
+  <IdentityAssertions>
+    <IdentityAssertion SchemaName="sAmAccountName">user01</IdentityAssertion>
+    <IdentityAssertion SchemaName="userPrincipalName">user01@asdf.edu.au</IdentityAssertion>
+    <IdentityAssertion SchemaName="distinguishedName">cn=User01,cn=Users,dc=org</IdentityAssertion>
+  </IdentityAssertions>
+  <AuthenticationSourceGlobalUID>23A08571E4D645C3B82A3E52E5349925</AuthenticationSourceGlobalUID>
+</Identity>
