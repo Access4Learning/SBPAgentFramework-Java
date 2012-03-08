@@ -47,7 +47,7 @@ done
 #########################################
 # Add config directories to classpath
 #########################################
-AGENT_CLASS_PATH=$AGENT_CLASS_PATH:$CONFIG_PATH:$PROJ_JAR_PATH/sbpframework-au_1.2-v1.0-beta.jar
+AGENT_CLASS_PATH=$AGENT_CLASS_PATH:$CONFIG_PATH:$PROJ_JAR_PATH/sbpframework-au_1.2-v1.1-beta.jar
 
 echo ========================================================
 echo Classpath: $AGENT_CLASS_PATH
