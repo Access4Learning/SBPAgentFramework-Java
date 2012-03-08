@@ -53,7 +53,7 @@ public class DOCacheDAO extends BaseDAO
 	 * @param zoneId The zone ID for which the cached object shall be returned. 
 	 * @param loadAll TRUE=>Load all children elements (lazy loading forced). FALSE no children objects are loaded. 
 	 * 
-     * @return The DOCahce object if it exists in the cache already, null if it does not exist.
+     * @return The DOCache object if it exists in the cache already, null if it does not exist.
      * 
 	 * @throws IllegalArgumentException: Any of the arguments is null.
 	 * @throws PersistenceException: There is an issue with the underlying database. An error is logged.

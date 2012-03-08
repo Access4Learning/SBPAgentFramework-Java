@@ -89,28 +89,67 @@ public class DependentObjectInfo
     	return this.keyInfoList;
     }
 
+	public void setKeyInfoList(Set<DependentKeyInfo> keyInfoList)
+    {
+    	this.keyInfoList = keyInfoList;
+    }
+	
 	/**
 	 * Returns the keys of this object as a list ordered by sortOrder. This is a true copy of the key 
-	 * stored internally.
-
+	 * stored internally. Only Keys marked with 'indicatorField = false' are returned.
 	 */
 	public List<DependentKeyInfo> getOrderedKeyInfoList()
     {
 		ArrayList<DependentKeyInfo> keyList = new ArrayList<DependentKeyInfo>(getKeyInfoList());
 		
 		// set correct order
+		int indcatorIdx = -1;
+		int currentIdx = 0;
 		for (DependentKeyInfo key : getKeyInfoList())
 		{
-			keyList.set(key.getSortOrder() - 1, new DependentKeyInfo(null, key.getXpath(), key.getSortOrder()));
+			if (!key.getIndicatorField())
+			{
+				keyList.set(key.getSortOrder() - 1, new DependentKeyInfo(null, key.getXpath(), key.getSortOrder(), false));
+			}
+			else
+			{
+				indcatorIdx = currentIdx;
+			}
+			currentIdx++;
 		}
+		
+		// remove indicator field if one exists
+		if (indcatorIdx != -1)
+		{
+			keyList.remove(indcatorIdx);
+		}
+		
 		return keyList;
     }
-
 	
-	public void setKeyInfoList(Set<DependentKeyInfo> keyInfoList)
-    {
-    	this.keyInfoList = keyInfoList;
-    }
+	/**
+	 * This method returns the xPath name of the indicator field of the dependent object. If there is no such field then null
+	 * is returned. The returned object is a true copy of the indicator field. If the parameter includeValidIndicator is set to
+	 * TRUE then the valid indicator list is returned as well otherwise it is not returned.
+	 * 
+	 * @return See description
+	 */
+	public DependentKeyInfo getIndicatorField(boolean includeValidIndicator)
+	{
+		for (DependentKeyInfo key : getKeyInfoList())
+		{
+			if (key.getIndicatorField())
+			{
+				DependentKeyInfo keyInfo = new DependentKeyInfo(null, key.getXpath(), key.getSortOrder(), true);
+				if (includeValidIndicator)
+				{
+					keyInfo.setValidIndicatorList(key.getValidIndicatorList());
+				}
+				return keyInfo;
+			}
+		}
+		return null; // none found
+	}
 	
 	@Override
 	public String toString()

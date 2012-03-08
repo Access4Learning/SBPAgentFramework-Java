@@ -20,6 +20,10 @@
             <key column="SIF_OBJECT_NAME"/>
             <one-to-many class="systemic.sif.sbpframework.persist.model.DependentObjectInfo" not-found="ignore"/>
         </set>
+        <set name="usedAsIndicatorList" table="SCF_VALID_INDICATOR" lazy="false">
+            <key column="SIF_OBJECT_NAME"/>
+            <many-to-many column="DEPENDENCY_KEY_INFO_ID" class="systemic.sif.sbpframework.persist.model.DependentKeyInfo"/>
+        </set>
     </class>
     
     <class name="systemic.sif.sbpframework.persist.model.SIFObjectKey" table="SCF_OBJECT_KEY" mutable="false">
@@ -49,6 +53,12 @@
         </id>
         <property name="xpath" column="XPATH_TO_KEY" type="string" length="256"/>
         <property name="sortOrder" column="SORT_ORDER" type="integer" length="45"/>
+        <property name="indicatorField" column="IS_INDICATOR" type="boolean"/>
+        <set name="validIndicatorList" table="SCF_VALID_INDICATOR" lazy="false">
+            <key column="DEPENDENCY_KEY_INFO_ID"/>
+            <many-to-many column="SIF_OBJECT_NAME" class="systemic.sif.sbpframework.persist.model.SIFObject"/>
+        </set>
+        
     </class>    
     
 </hibernate-mapping>

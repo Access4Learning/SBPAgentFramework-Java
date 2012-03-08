@@ -660,6 +660,10 @@ public class DOCService extends DBService
     				{
     					extractDependentObjects(sifObject, cachedObj, dependendInfo, dependencies);    					
     				}
+    				if (dependencies.size() == 0) // can be the case for indicator dependencies
+    				{
+    					dependencies = null;
+    				}
     			}		
     		}
     	}
@@ -705,11 +709,52 @@ public class DOCService extends DBService
 	private DOCObject extractDependentObjectInfo(SIFDataObject sifObject, SIFObject sourceObj,  DependentObjectInfo dependendObjInfo, String xpathToListObject) throws ADKSchemaException
 	{
 		DOCObject depObj = new DOCObject();
-		depObj.setSifObjectName(dependendObjInfo.getParentObject().getName());
+		SIFObject parentObject = dependendObjInfo.getParentObject();
+		
+		//First check if object is indicator: dependendObjInfo.getParentObject() == null
+		//If so extract the indicator value from actual SIFObject to determine what the parent object is then 
+		//check if it is a required dependency (maybe it is not and is marked as ignored).
+		//If it is ignored we don't set the parentObject otherwise we get the info from the metadataCache
+		if (parentObject == null) // indicator object
+		{
+		    DependentKeyInfo indicatorInfo = dependendObjInfo.getIndicatorField(true);
+		    String parentName = null;
+		    if (indicatorInfo != null)
+		    {
+		        Element elem = sifObject.getElementOrAttribute(xpathToListObject+indicatorInfo.getXpath());
+                if (elem != null)
+                {
+                    parentName = elem.getTextValue();
+                    
+                    // Do we need to ignore this dependency?
+                    for (SIFObject indicatorySIFObj : indicatorInfo.getValidIndicatorList())
+                    {
+                        if (indicatorySIFObj.getName().equals(parentName))
+                        {
+                            parentObject = metadataCache.getObjectMetadata(parentName);
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    logger.error("There is no indicator defined for the Object "+ sourceObj.getName() + " with key of "+indicatorInfo.getXpath());
+                }
+		    }
+		}
+		
+		// If parentObject is still null then there is no dependency = > return null
+		if (parentObject == null)
+		{
+		    return null;
+		}
+		
+		// If we get here we do have a valid parent object for which we must extract the key etc.
+		depObj.setSifObjectName(parentObject.getName());
 		
 		//Extract Key Definition Info
 		List<SIFObjectKey> keyForDependentObject = new ArrayList<SIFObjectKey>();
-		for (SIFObjectKey key : dependendObjInfo.getParentObject().getOrderedKeyList())
+		for (SIFObjectKey key : parentObject.getOrderedKeyList())
 		{
 			keyForDependentObject.add(new SIFObjectKey(null, key.getXpath(), key.getSortOrder()));
 		}
@@ -720,7 +765,7 @@ public class DOCService extends DBService
 			depObj.setKeyForDependentObject(keyForDependentObject);
 			
 			// Flatten key and store it in the appropriate property.
-			depObj.setObjectKeyValue(flattenOrderedKey(keyForDependentObject, dependendObjInfo.getParentObject().getKeySeparator()));
+			depObj.setObjectKeyValue(flattenOrderedKey(keyForDependentObject, parentObject.getKeySeparator()));
 			depObj.setRequested(Boolean.FALSE);
 			
 			return depObj;

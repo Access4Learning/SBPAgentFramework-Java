@@ -37,6 +37,7 @@ public class SIFObject
 	private String defaultExpiryStrategy;
 	private Set<SIFObjectKey> objectKeys;
 	private Set<DependentObjectInfo> dependentObjects;
+	private Set<DependentKeyInfo> usedAsIndicatorList;
 	
 	public SIFObject(){}
 		
@@ -116,6 +117,16 @@ public class SIFObject
     	this.dependentObjects = dependentObjects;
     }
 
+	public Set<DependentKeyInfo> getUsedAsIndicatorList()
+    {
+    	return this.usedAsIndicatorList;
+    }
+
+	public void setUsedAsIndicatorList(Set<DependentKeyInfo> usedAsIndicatorList)
+    {
+    	this.usedAsIndicatorList = usedAsIndicatorList;
+    }
+
 	@Override
 	public String toString()
 	{
@@ -124,6 +135,7 @@ public class SIFObject
 		"\ndefaultExpiryInMinutes = " + defaultExpiryInMinutes +
 		"\ndefaultExpiryStrategy = " + defaultExpiryStrategy +
 		"\nobjectKeys = " + objectKeys +
-		"\ndependentObjects = " + dependentObjects;
+		"\ndependentObjects = " + dependentObjects+
+		"\nusedAsIndicatorList = " + (usedAsIndicatorList == null || (usedAsIndicatorList.size() == 0));
 	}
 }
