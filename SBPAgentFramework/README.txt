@@ -48,3 +48,29 @@ From the command-line type: git clone git://github.com/nsip/SBPAgentFramework-Ja
 
 Note that if you want to use this option but don't have the client installed, it can be 
 downloaded from http://git-scm.com/download.
+
+#########################################################################################################
+# Versions: Current version is v1.1-beta
+#########################################################################################################
+
+Upgrade instructions from v1.0-beta to v1.1-beta
+================================================
+Option 1: Run DB Update Script
+------------------------------
+a) Run the <sbp_rootDir>/DB/scripts/upgrade/SBP_v1_0_to_v1_1.sql in your SQLite DB. If you use another DB (i.e MySQL) then 
+   you need to change that script to cater for the syntax of your DB.
+b) Copy the <sbp_rootDir>/build/dist/sbpframework-au_1.2-v1.1-beta.jar into the lib directory of your project and remove
+   sbpframework-au_1.2-v1.0-beta.jar from your project.
+c) Change classpath in your startup scripts to point to this new jar file or use the latest version of the startAgent.bat/sh
+   from <sbp_rootDir>/scripts.
+
+Option 2: Only valid if you use provides SQLite DB.
+---------------------------------------------------
+a) If you do not have any cached object in your Dependent Object Cache or if you don't mind losing what is in there then
+   you can simply copy the <sbp_rootDir>/DB/SCF.sqliteDB to the location where you have currently stored the same DB within
+   your project.
+b) Copy the <sbp_rootDir>/build/dist/sbpframework-au_1.2-v1.1-beta.jar into the lib directory of your project and remove
+   sbpframework-au_1.2-v1.0-beta.jar from your project.
+c) Change classpath in your startup scripts to point to this new jar file or use the latest version of the startAgent.bat/sh
+   from <sbp_rootDir>/scripts.
+   
