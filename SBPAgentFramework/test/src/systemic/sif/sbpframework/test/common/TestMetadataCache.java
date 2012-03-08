@@ -90,9 +90,14 @@ public class TestMetadataCache
 //        	tester.testDependencies("StaffPersonal");
 //        	tester.testDependencies("TimeTableSubject");
 //        	tester.testDependencies("StudentContactRelationship");
-        	tester.displayContent();
-        	tester.testDependUpon("StudenntSchoolEnrollment");
-        	tester.testDependUpon("StudentPersonal");
+//        	tester.displayContent();
+//        	tester.testDependUpon("StudenntSchoolEnrollment");
+//        	tester.testDependUpon("StudentPersonal");
+//        	tester.testDependUpon("Identity");
+        	tester.getMedatadataFor("Identity");
+        	tester.getMedatadataFor("StaffAssignment");
+        	tester.testDependUpon("StaffPersonal");
+        	tester.testDependencies("Identity");
         	
         	
         }
