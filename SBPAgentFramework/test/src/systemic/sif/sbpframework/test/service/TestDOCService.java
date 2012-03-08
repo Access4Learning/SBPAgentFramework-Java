@@ -37,7 +37,7 @@ import systemic.sif.sbpframework.persist.servcie.DOCService;
  */
 public class TestDOCService extends ServiceBaseTest
 {
-	private static final String TEST_DATA_DIR = "C:/Development/SBPAgentFramework/testData/input/";
+	private static final String TEST_DATA_DIR = "C:/Development/GitHubRepositories/SBPAgentFramework/SBPAgentFramework/testData/input/";
 	private static final String ZONE_ID = "SIFDemo";
 	private static final String APP_ID = "MyApp";
 	private static final String AGENT_ID = "SubscribingAgent";
@@ -198,7 +198,7 @@ public class TestDOCService extends ServiceBaseTest
 	
     public void testGetObjectsWithoutDependencies()
     {
-    	List<DOCache> objects = service.getObjectsWithoutDependencies("StudentContactRelationship", APP_ID, AGENT_ID);
+    	List<DOCache> objects = service.getObjectsWithoutDependencies("Identity", APP_ID, AGENT_ID);
     	System.out.println("List of Objects without Dependencies:");
     	for (DOCache obj : objects) 
     	{
@@ -208,7 +208,7 @@ public class TestDOCService extends ServiceBaseTest
     
     public void testRemoveObjectsWithoutDependencies()
     {
-    	List<DOCache> objects = service.getObjectsWithoutDependencies("StudentContactRelationship", APP_ID, AGENT_ID);
+    	List<DOCache> objects = service.getObjectsWithoutDependencies("Identity", APP_ID, AGENT_ID);
     	System.out.println("List of Objects without Dependencies:");
     	for (DOCache obj : objects) 
     	{
@@ -247,25 +247,30 @@ public class TestDOCService extends ServiceBaseTest
 		try
         {
         	TestDOCService tester = new TestDOCService();
-        	//tester.testDependencies("SingleStudentPersonal.xml");
+//        	tester.testDependencies("SingleStudentPersonal.xml");
 //        	tester.testDependencies("SingleStudentSchoolEnrollment.xml");
 //        	tester.testDependencies("SingleTeachingGroup.xml");
+//        	tester.testDependencies("IdentityStaffPersonal.xml");
 //        	tester.testRetrieve("SingleTeachingGroup.xml");      	
+//        	tester.testRetrieve("IdentityStaffPersonal.xml");      	
 //        	tester.testExtractFlatKey("SingleStudentRelationship.xml");
+//        	tester.testExtractFlatKey("IdentityStaffPersonal.xml");
 //        	tester.testDependencies("SingleStudentRelationship.xml");
 //        	tester.testCacheObject("SingleStudentRelationship.xml");
+//        	tester.testCacheObject("IdentityStaffPersonal.xml");
 //        	tester.testCacheObject("SingleTeachingGroup.xml");
 //        	tester.testMarkAreadyRequestedObjects("SingleStudentRelationship.xml");
-        	tester.testGetDependenciesFromSIFObjectAndCache("SingleTeachingGroup.xml");
+//        	tester.testGetDependenciesFromSIFObjectAndCache("SingleTeachingGroup.xml");
 //        	tester.testGetDependenciesFromSIFObjectAndCache("SingleStudentRelationship.xml");
 //        	tester.testCheckAndRemoveDependency("SingleStudentContact.xml");
 //        	tester.testCheckAndRemoveDependency("SingleStudentPersonal.xml");
+//        	tester.testCheckAndRemoveDependency("StaffPersonal.xml");
 //        	tester.testGetNotYetRequestedObjects();
 //        	tester.testGetObjectsWithoutDependencies();
 //        	tester.testGetExpiredObjects();
 //        	tester.testRemoveCachedObject();
 //        	tester.testUpdateExpiredObjects();
-//        	tester.testRemoveObjectsWithoutDependencies();
+        	tester.testRemoveObjectsWithoutDependencies();
        
         	tester.shutdown();
         }
