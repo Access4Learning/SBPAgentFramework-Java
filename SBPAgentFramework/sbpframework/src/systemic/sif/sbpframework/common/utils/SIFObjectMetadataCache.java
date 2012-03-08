@@ -27,6 +27,7 @@ import javax.persistence.PersistenceException;
 
 import org.apache.log4j.Logger;
 
+import systemic.sif.sbpframework.persist.model.DependentKeyInfo;
 import systemic.sif.sbpframework.persist.model.DependentObjectInfo;
 import systemic.sif.sbpframework.persist.model.SIFObject;
 import systemic.sif.sbpframework.persist.servcie.SIFObjectMetadataService;
@@ -169,9 +170,28 @@ public class SIFObjectMetadataCache
 			for (Iterator<DependentObjectInfo> iter = obj.getDependentObjects().iterator(); iter.hasNext();)
 			{
 				DependentObjectInfo depObj = iter.next();
-				if (cacheProperties.getIgnoreDependency(obj.getName(), depObj.getParentObject().getName()))
+				if (depObj.getParentObject() != null)
 				{
-					iter.remove();
+					if (cacheProperties.getIgnoreDependency(obj.getName(), depObj.getParentObject().getName()))
+					{
+						iter.remove();
+					}
+				}
+				else // Indicator Dependencies
+				{
+					DependentKeyInfo keyInfo = getIndicatorField(depObj);
+					for (Iterator<SIFObject> validObjIter = keyInfo.getValidIndicatorList().iterator(); validObjIter.hasNext();)
+					{
+						SIFObject validObj = validObjIter.next();
+						if (cacheProperties.getIgnoreDependency(obj.getName(), validObj.getName()))
+						{
+							validObjIter.remove();
+						}
+					}
+					if (keyInfo.getValidIndicatorList().size() == 0) // none left
+					{
+						iter.remove();
+					}
 				}
 			}
 			cache.put(obj.getName(), obj);
@@ -183,7 +203,21 @@ public class SIFObjectMetadataCache
 		{
 			for (DependentObjectInfo depObj : obj.getDependentObjects())
 			{
-				dependUponSet.add(depObj.getParentObject().getName());
+				if (depObj.getParentObject() != null)
+				{
+					dependUponSet.add(depObj.getParentObject().getName());
+				}
+				else // Indicator Dependencies
+				{
+					DependentKeyInfo keyInfo = getIndicatorField(depObj);
+					for (SIFObject validObj : keyInfo.getValidIndicatorList())
+					{
+						if (!cacheProperties.getIgnoreDependency(obj.getName(), validObj.getName()))
+						{
+							dependUponSet.add(validObj.getName());
+						}
+					}				
+				}
 			}
 		}		
 		
@@ -191,4 +225,16 @@ public class SIFObjectMetadataCache
 		logger.debug("SIF Object Metadata Cache loaded. Time taken: "+timer.timeTaken()+"ms");
 	}
 
+	
+	public DependentKeyInfo getIndicatorField(DependentObjectInfo depObj)
+	{
+		for (DependentKeyInfo key : depObj.getKeyInfoList())
+		{
+			if (key.getIndicatorField())
+			{
+				return key;
+			}
+		}
+		return null; // none found}
+	}
 }
