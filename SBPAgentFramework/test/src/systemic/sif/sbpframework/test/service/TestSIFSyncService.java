@@ -28,10 +28,15 @@ public class TestSIFSyncService extends ServiceBaseTest
 {
 	private SIFSyncService service = new SIFSyncService();
 	
+	public TestSIFSyncService()
+	{
+		super();
+	}
+	
 	private boolean requireSIFSync()
 	{
 		boolean syncRequired = service.requiresSyncForObjectInZone("StudentPersonal", "SubscriberAgent", "SIFDemo");
-		System.out.println("Requrie Sync for StudentPersonal/SIFDemo: "+syncRequired);
+		System.out.println("Require Sync for StudentPersonal/SIFDemo: "+syncRequired);
 		
 		return syncRequired;
 	}

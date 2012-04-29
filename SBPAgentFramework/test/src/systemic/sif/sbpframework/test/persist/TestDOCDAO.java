@@ -33,7 +33,7 @@ public class TestDOCDAO extends DAOBaseTest
 	private void testRetrieveCachedObject()
 	{
 		startTransaction(docCacheDAO);
-        DOCache cachedObj = docCacheDAO.retrieveCachedObject("StudentPersonal", "7C834EA9EDA12090347F83297E1C290C", "MyApp", "TestZone", false);
+        DOCache cachedObj = docCacheDAO.retrieveCachedObject(getTransaction(), "StudentPersonal", "7C834EA9EDA12090347F83297E1C290C", "MyApp", "TestZone", false);
 		commit();
 		System.out.println("Cached Object = "+cachedObj);
 	}
@@ -47,7 +47,7 @@ public class TestDOCDAO extends DAOBaseTest
 		objectToTest.setApplicationId("MyApp");
 		objectToTest.setZoneId("TestZone");
 		
-		DOCObject cachedObj = docCacheDAO.getCachedDependentObject(objectToTest);
+		DOCObject cachedObj = docCacheDAO.getCachedDependentObject(getTransaction(), objectToTest);
 		commit();
 		System.out.println("objectToTest:\n"+cachedObj);
 	}
@@ -61,7 +61,7 @@ public class TestDOCDAO extends DAOBaseTest
 		objectToTest.setApplicationId("MyApp");
 		objectToTest.setZoneId("TestZone");
 		
-		docCacheDAO.removeDependency(objectToTest);
+		docCacheDAO.removeDependency(getTransaction(), objectToTest);
 		commit();
 		System.out.println("Dependencies Removed");
 	}

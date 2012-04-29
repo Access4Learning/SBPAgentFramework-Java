@@ -42,7 +42,7 @@ public class TestZoneSync extends DAOBaseTest
 		
 		startTransaction(dao);
 
-		dao.save(row);
+		dao.save(getTransaction(), row);
 		
 		commit();
 		System.out.println("row = "+row);
@@ -54,7 +54,7 @@ public class TestZoneSync extends DAOBaseTest
 	{
 		startTransaction(dao);
 
-		ObjectZoneSync row = dao.retrieve("StudentPersonal", "SubscribingAgent", "SIFDemo");
+		ObjectZoneSync row = dao.retrieve(getTransaction(), "StudentPersonal", "SubscribingAgent", "SIFDemo");
 		
 		commit();
 		System.out.println("row = "+row);
@@ -68,7 +68,7 @@ public class TestZoneSync extends DAOBaseTest
         {
         	TestZoneSync tester = new TestZoneSync();
         	ObjectZoneSync row = tester.getInfo();
-        	//tester.insert(row);
+        	tester.insert(row);
         	
         	tester.shutdown();
         }

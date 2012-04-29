@@ -18,8 +18,7 @@
 
 package systemic.sif.sbpframework.test.persist;
 
-import org.hibernate.Transaction;
-
+import systemic.sif.sbpframework.persist.common.BasicTransaction;
 import systemic.sif.sbpframework.persist.common.HibernateUtil;
 import systemic.sif.sbpframework.persist.dao.BaseDAO;
 
@@ -29,11 +28,17 @@ import systemic.sif.sbpframework.persist.dao.BaseDAO;
  */
 public class DAOBaseTest
 {
-	private Transaction tx;
+	private BasicTransaction tx;
 	
 	public void startTransaction(BaseDAO dao)
 	{
-		tx = dao.getCurrentSession().beginTransaction();
+		tx = new BasicTransaction();
+		tx.startTransaction();
+	}
+	
+	public BasicTransaction getTransaction()
+	{
+		return tx;
 	}
 	
 	/* commits changes and finalises transaction */

@@ -29,6 +29,11 @@ import au.com.systemic.framework.utils.FileReaderWriter;
  */
 public class ServiceBaseTest
 {
+	
+	public ServiceBaseTest()
+	{
+	}
+	
 	public void shutdown()
 	{
 		HibernateUtil.shutdown();

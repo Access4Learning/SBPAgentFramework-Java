@@ -39,6 +39,7 @@ public class TestDOCService extends ServiceBaseTest
 {
 	private static final String TEST_DATA_DIR = "C:/Development/GitHubRepositories/SBPAgentFramework/SBPAgentFramework/testData/input/";
 	private static final String ZONE_ID = "SIFDemo";
+	private static final String ZONE_ID_2 = "SIFDemo_2";
 	private static final String APP_ID = "MyApp";
 	private static final String AGENT_ID = "SubscribingAgent";
 
@@ -191,7 +192,7 @@ public class TestDOCService extends ServiceBaseTest
 	
 	public void testGetNotYetRequestedObjects() throws Exception
 	{
-		List<DOCObject> objectsToRequest = service.getNotYetRequestedObjects("StudentContactPersonal", APP_ID, ZONE_ID);
+		List<DOCObject> objectsToRequest = service.getNotYetRequestedObjects("StaffPersonal", APP_ID, ZONE_ID);
 		System.out.println("List of not requested object:\n"+objectsToRequest);
 	}
 	
