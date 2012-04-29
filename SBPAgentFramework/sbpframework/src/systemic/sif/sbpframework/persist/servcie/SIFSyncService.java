@@ -22,6 +22,7 @@ import java.util.Date;
 
 import javax.persistence.PersistenceException;
 
+import systemic.sif.sbpframework.persist.common.BasicTransaction;
 import systemic.sif.sbpframework.persist.dao.BaseDAO;
 import systemic.sif.sbpframework.persist.dao.ObjectSyncInfoDAO;
 import systemic.sif.sbpframework.persist.model.ObjectZoneSync;
@@ -52,10 +53,8 @@ public class SIFSyncService extends DBService
      */
     public void markSIFZoneAsSyncedForObject(String sifObjectName, String agentId, String zoneID) throws IllegalArgumentException, PersistenceException
     {
-		startTransaction();
-//		SIFObjectMetadataCache cache = SIFObjectMetadataCache.getCache();
-//		SIFObject cachedObj = cache.getObjectMetadata(sifObjectName);
-		ObjectZoneSync row = objectSyncInfoDAO.retrieve(sifObjectName, agentId, zoneID);
+    	BasicTransaction tx = startTransaction();
+		ObjectZoneSync row = objectSyncInfoDAO.retrieve(tx, sifObjectName, agentId, zoneID);
 
 		// doesn't exist => must create object
 		if (row == null)
@@ -64,9 +63,9 @@ public class SIFSyncService extends DBService
 		}
 		row.setLastRequested(new Date());
 
-		objectSyncInfoDAO.save(row);
+		objectSyncInfoDAO.save(tx, row);
 		
-		commit();
+		tx.commit();
     }
 
     /**
@@ -83,11 +82,11 @@ public class SIFSyncService extends DBService
      */
     public boolean requiresSyncForObjectInZone(String sifObjectName, String agentId, String zoneID) throws IllegalArgumentException, PersistenceException
     {
-		startTransaction();
+    	BasicTransaction tx = startTransaction();
 
-		ObjectZoneSync row = objectSyncInfoDAO.retrieve(sifObjectName, agentId, zoneID);
+		ObjectZoneSync row = objectSyncInfoDAO.retrieve(tx, sifObjectName, agentId, zoneID);
 		
-		commit();
+		tx.commit();
 
 		return row == null;
      }

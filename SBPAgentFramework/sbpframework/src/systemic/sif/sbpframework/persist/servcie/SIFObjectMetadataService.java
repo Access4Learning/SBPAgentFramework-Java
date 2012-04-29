@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.persistence.PersistenceException;
 
+import systemic.sif.sbpframework.persist.common.BasicTransaction;
 import systemic.sif.sbpframework.persist.dao.BaseDAO;
 import systemic.sif.sbpframework.persist.dao.SIFObjectMetadataDAO;
 import systemic.sif.sbpframework.persist.model.SIFObject;
@@ -54,11 +55,9 @@ public class SIFObjectMetadataService extends DBService
     public List<SIFObject> getAllSIFObjectMetadata() throws PersistenceException
     {
     	List<SIFObject> metadata = null; 	
-    	
-		startTransaction();
-    	//startNewTransactionScope();
-		metadata = metadataDAO.getAllSIFObjectData();
-		commit();   
+    	BasicTransaction tx = startTransaction();
+		metadata = metadataDAO.getAllSIFObjectData(tx);
+		tx.commit();   
 		
 		return metadata;
     }

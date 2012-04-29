@@ -31,6 +31,7 @@ import openadk.library.SIFDataObject;
 import org.apache.log4j.Logger;
 
 import systemic.sif.sbpframework.common.utils.SIFObjectMetadataCache;
+import systemic.sif.sbpframework.persist.common.BasicTransaction;
 import systemic.sif.sbpframework.persist.dao.BaseDAO;
 import systemic.sif.sbpframework.persist.dao.DOCacheDAO;
 import systemic.sif.sbpframework.persist.model.DOCObject;
@@ -105,7 +106,7 @@ public class DOCService extends DBService
      * @param loadAll Indicates if all dependent objects shall be loaded into memory. This is required since information
      *                is 'lazy' loaded by hibernate.
      * 
-     * @return The DOCahce object if it exists in the cache already, null if it does not exist.
+     * @return The DOCache object if it exists in the cache already, null if it does not exist.
      * 
      * @throws PersistenceException If there is an error in the underlying DB. The error is logged.
      * @throws IllegalArgumentException If any of the parameters is null or empty.
@@ -150,15 +151,18 @@ public class DOCService extends DBService
     public DOCache retrieveCachedObject(String sifObjectName, String flatKey, String applicationId, String zoneId, boolean loadAll) throws PersistenceException, IllegalArgumentException
     {
     	DOCache cachedObject = null;
-       	startTransaction();
+    	BasicTransaction tx = startTransaction();
     	try
     	{
-    		cachedObject = docCacheDAO.retrieveCachedObject(sifObjectName, flatKey, applicationId, zoneId, loadAll);
-    		commit();
+    		cachedObject = docCacheDAO.retrieveCachedObject(tx, sifObjectName, flatKey, applicationId, zoneId, loadAll);
+    		tx.commit();
     	}
     	catch (Exception ex)
     	{
-    		rollback();
+    		if (tx != null)
+    		{
+    			tx.rollback();
+    		}
     		exceptionMapper(ex, "Failed to retrieve cached object from DOCache for Object = '"+sifObjectName+"', flat key = '"+flatKey+"', application ID = '"+applicationId+"' and zoneId = '"+zoneId+"'", true, false);
     	}
 		return cachedObject;
@@ -219,15 +223,19 @@ public class DOCService extends DBService
 	    	}
 	    	
 	    	// Now the object is ready to be saved.
+	    	BasicTransaction tx = null;	    	
 	    	try
 	    	{
-	        	startTransaction();
-	    		docCacheDAO.save(sifObjectToCache);
-	    		commit();
+	    		tx = startTransaction();
+	    		docCacheDAO.save(tx, sifObjectToCache);
+	    		tx.commit();
 	    	}
 	    	catch (Exception ex)
 	    	{
-	    		rollback();
+	    		if (tx != null)
+	    		{
+	    			tx.rollback();
+	    		}
 	    		exceptionMapper(ex, "Failed to save SIF Object to DOC Cache:\nObject To Cache:\n"+sifObjectToCache, true, false);
 	    	}
     	}
@@ -258,15 +266,19 @@ public class DOCService extends DBService
     	docObject.setRequested(Boolean.TRUE);
 
     	// Now the object is ready to be saved.
+    	BasicTransaction tx = null;	    	
     	try
     	{
-        	startTransaction();
-    		docCacheDAO.save(docObject);
-    		commit();
+    		tx = startTransaction();
+    		docCacheDAO.save(tx, docObject);
+    		tx.commit();
     	}
     	catch (Exception ex)
     	{
-    		rollback();
+    		if (tx != null)
+    		{
+    			tx.rollback();
+    		}
     		exceptionMapper(ex, "Failed to mark Dependent Object as reuested.:\n"+docObject, true, false);
     	}
     	
@@ -293,26 +305,30 @@ public class DOCService extends DBService
     {
     	if ((dependentObjectList != null) && (dependentObjectList.size() > 0))
     	{
+	    	BasicTransaction tx = null;	    	
 	    	try
 	    	{
-	        	startTransaction();
+	    		tx = startTransaction();
 	        	for (int i=0; i<dependentObjectList.size(); i++)
 	        	{
 	        		DOCObject depObj = dependentObjectList.get(i);
 	        		depObj.setApplicationId(applicationId);
 	    			depObj.setZoneId(zoneId);
-	    			DOCObject reqObj = docCacheDAO.getCachedDependentObject(depObj);
+	    			DOCObject reqObj = docCacheDAO.getCachedDependentObject(tx, depObj);
 	    			if (reqObj != null)
 	    			{
 	    				dependentObjectList.set(i, reqObj);
 	    			}
 	        	}
 	        	        	
-	    		commit();
+	        	tx.commit();
 	    	}
 	    	catch (Exception ex)
 	    	{
-	    		rollback();
+	    		if (tx != null)
+	    		{
+	    			tx.rollback();
+	    		}
 	    		exceptionMapper(ex, "Failed to mark dependent objects as requested.", true, true);
 	    	}
     	}
@@ -353,15 +369,19 @@ public class DOCService extends DBService
 		docObject.setApplicationId(applicationId);
 		docObject.setZoneId(zoneId);
 		
+    	BasicTransaction tx = null;	    	
     	try
     	{
-        	startTransaction();
-        	docCacheDAO.removeDependency(docObject);
-    		commit();
+    		tx = startTransaction();
+        	docCacheDAO.removeDependency(tx, docObject);
+        	tx.commit();
     	}
     	catch (Exception ex)
     	{
-    		rollback();
+    		if (tx != null)
+    		{
+    			tx.rollback();
+    		}
     		exceptionMapper(ex, "Failed to remove dependencies for object "+sifObjectName + " and flat key = "+flatKey, true, true);
     	}		    	
     }
@@ -391,15 +411,19 @@ public class DOCService extends DBService
     {
     	checkMetadataCache();
     	List<DOCObject> docList = null;
+    	BasicTransaction tx = null;	    	
     	try
     	{
-        	startTransaction();
-        	docList = docCacheDAO. getNotYetRequestedObjects(sifObjectName, applicationId, zoneId);
-    		commit();
+    		tx = startTransaction();
+        	docList = docCacheDAO.getNotYetRequestedObjects(tx, sifObjectName, applicationId, zoneId);
+        	tx.commit();
     	}
     	catch (Exception ex) //any other exception...
     	{
-    		rollback();
+    		if (tx != null)
+    		{
+    			tx.rollback();
+    		}
     		exceptionMapper(ex, "Unable to retrieve list of DOCObjects for application = '"+ applicationId + "', Sif Object = '" + sifObjectName+ "', zone = '" + zoneId +"'.", true, false);
     	}
     	
@@ -445,15 +469,19 @@ public class DOCService extends DBService
     public List<DOCache> getObjectsWithoutDependencies(String sifObjectName, String applicationId, String agentId) throws IllegalArgumentException, PersistenceException
     {
     	List<DOCache> objectList = null;
+    	BasicTransaction tx = null;	    	
     	try
     	{
-        	startTransaction();
-        	objectList = docCacheDAO.getObjectsWithoutDependencies(sifObjectName, applicationId, agentId);
-    		commit();
+    		tx = startTransaction();
+        	objectList = docCacheDAO.getObjectsWithoutDependencies(tx, sifObjectName, applicationId, agentId);
+        	tx.commit();
      	}
     	catch (Exception ex) 
     	{
-    		rollback();
+    		if (tx != null)
+    		{
+    			tx.rollback();
+    		}
     		exceptionMapper(ex, "Unable to retrieve list of Cached Objects without dependencies for application = '"+ applicationId + "', Sif Object = '" + sifObjectName + "'and agent = '" + agentId + "'.", true, false);
     	}
    		return objectList;
@@ -475,15 +503,19 @@ public class DOCService extends DBService
     public List<DOCache> getExpiredObjects(String applicationId, String agentId) throws IllegalArgumentException, PersistenceException
     {
     	List<DOCache> objectList = null;
+    	BasicTransaction tx = null;	    	
     	try
     	{
-        	startTransaction();
-        	objectList = docCacheDAO.getExpiredObjects(applicationId, agentId);
-    		commit();
+    		tx = startTransaction();
+        	objectList = docCacheDAO.getExpiredObjects(tx, applicationId, agentId);
+        	tx.commit();
      	}
     	catch (Exception ex) 
     	{
-    		rollback();
+    		if (tx != null)
+    		{
+    			tx.rollback();
+    		}
     		exceptionMapper(ex, "Unable to retrieve list of expired Cached Objects for application = '"+ applicationId + "'and agent = '" + agentId + "'.", true, false);
     	}
    		return objectList;
@@ -499,15 +531,19 @@ public class DOCService extends DBService
      */
     public void removeCachedObject(DOCache cacheObject)throws PersistenceException
     {
+    	BasicTransaction tx = null;	    	
     	try
     	{
-        	startTransaction();
-        	docCacheDAO.removeCachedObject(cacheObject);
-    		commit();
+    		tx = startTransaction();
+        	docCacheDAO.removeCachedObject(tx, cacheObject);
+        	tx.commit();
      	}
     	catch (Exception ex) 
     	{
-    		rollback();
+    		if (tx != null)
+    		{
+    			tx.rollback();
+    		}
     		exceptionMapper(ex, "Unable to remove cacheObject " + cacheObject + ".", true, false);
     	}
     }
@@ -532,11 +568,12 @@ public class DOCService extends DBService
 		{
 			throw new IllegalArgumentException("Some of the following parameters are either null or empty: applicationId, agentId");
 		}
+    	BasicTransaction tx = null;	    	
     	try
     	{
-        	startTransaction();
+    		tx = startTransaction();
        		Date now = new Date();
-       		List<DOCache> getExpiredObjects = docCacheDAO.getExpiredObjects(applicationId, agentId);
+       		List<DOCache> getExpiredObjects = docCacheDAO.getExpiredObjects(tx, applicationId, agentId);
        		for (DOCache cachedObject : getExpiredObjects)
        		{
        			// Should one test against the strategy in the metadata cache or what is in the DB?
@@ -548,7 +585,7 @@ public class DOCService extends DBService
        			// This test uses the DB value...
        			if (cachedObject.getExpiryStrategy().equals(SIFObject.EXPRIY_STARTEGY.EXPIRE.name()))
        			{
-       				docCacheDAO.removeCachedObject(cachedObject);
+       				docCacheDAO.removeCachedObject(tx, cachedObject);
        			}
        			else if (cachedObject.getExpiryStrategy().equals(SIFObject.EXPRIY_STARTEGY.REQUEST.name()))
        			{
@@ -564,18 +601,21 @@ public class DOCService extends DBService
        				cachedObject.setExpiryStrategy(sifObjectMetadata.getDefaultExpiryStrategy());
        				
        				//save the updated values
-       				docCacheDAO.save(cachedObject);
+       				docCacheDAO.save(tx, cachedObject);
        			}
        			else // Invalid expiry strategy.
        			{
        				logger.error("Invalid Expiry Strategy ("+cachedObject.getExpiryStrategy()+") defined for Cached Object "+cachedObject.getSifObjectName()+" and Key = "+cachedObject.getObjectKeyValue()+".");
        			}
        		}       	
-    		commit();
+       		tx.commit();
      	}
     	catch (Exception ex) 
     	{
-    		rollback();
+    		if (tx != null)
+    		{
+    			tx.rollback();
+    		}
     		exceptionMapper(ex, "Unable to update the expiry startegy for all expired cached objects for application = "+applicationId+" and agent = "+agentId+". See previous error log entry for detail.", true, false);
     	}
     }

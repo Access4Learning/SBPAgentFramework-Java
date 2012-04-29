@@ -18,8 +18,8 @@
 
 package systemic.sif.sbpframework.persist.servcie;
 
-import org.hibernate.Transaction;
-
+import systemic.sif.sbpframework.persist.common.BasicTransaction;
+import systemic.sif.sbpframework.persist.common.HibernateUtil;
 import systemic.sif.sbpframework.persist.dao.BaseDAO;
 
 /**
@@ -28,51 +28,23 @@ import systemic.sif.sbpframework.persist.dao.BaseDAO;
  */
 public abstract class DBService
 {
-	private Transaction tx = null;
-//	private Session session = null;
-	
 	public abstract BaseDAO getDAO();
 	
 	public DBService()
 	{
 	}
 	
-	public void startTransaction()
+	public BasicTransaction startTransaction()
 	{
-		tx = getDAO().getCurrentSession().beginTransaction();
+		BasicTransaction tx = new BasicTransaction(); 
+		tx.startTransaction();
+		return tx;
 	}
 	
-//	public void startNewTransactionScope()
-//	{
-//		session = HibernateUtil.getSessionFactory().openSession();
-//		tx = session.beginTransaction();
-//	}
-	
-	/* commits changes and finalises transaction */
-	public void commit()
-	{
-		tx.commit();
-//		if (session != null)
-//		{
-//			session.close();
-//			session = null;
-//		}
-	}
-	
-	/* commits changes and finalises transaction */
-	public void rollback()
-	{
-		tx.rollback();
-//		if (session != null)
-//		{
-//			session.close();
-//			session = null;
-//		}
-	}
-	
+	/* Convenience method to 'hide' hibernate as the underlying Data Access Engine */
 	public void loadSubObject(Object proxy)
 	{
-		getDAO().loadSubObject(proxy);
+		HibernateUtil.loadSubObject(proxy);
 	}
 
 }
