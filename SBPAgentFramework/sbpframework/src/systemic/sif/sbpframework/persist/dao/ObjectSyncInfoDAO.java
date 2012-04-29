@@ -26,6 +26,7 @@ import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.criterion.Restrictions;
 
+import systemic.sif.sbpframework.persist.common.BasicTransaction;
 import systemic.sif.sbpframework.persist.model.ObjectZoneSync;
 import au.com.systemic.framework.utils.StringUtils;
 
@@ -49,7 +50,7 @@ public class ObjectSyncInfoDAO extends BaseDAO
 	 * @throws PersistenceException: There is an issue with the underlying database. An error is logged.
      */
     @SuppressWarnings("unchecked")
-    public ObjectZoneSync retrieve(String sifObjectName, String agentId, String zoneID) throws IllegalArgumentException, PersistenceException
+    public ObjectZoneSync retrieve(BasicTransaction tx, String sifObjectName, String agentId, String zoneID) throws IllegalArgumentException, PersistenceException
     {
         if (StringUtils.isEmpty(sifObjectName) || StringUtils.isEmpty(zoneID))
         {
@@ -58,7 +59,7 @@ public class ObjectSyncInfoDAO extends BaseDAO
 
         try
         {
-            Criteria criteria = getCurrentSession().createCriteria(ObjectZoneSync.class)
+            Criteria criteria = tx.getSession().createCriteria(ObjectZoneSync.class)
                .add(Restrictions.eq("objectName", sifObjectName))
                .add(Restrictions.eq("agentId", agentId))
                .add(Restrictions.eq("zoneId", zoneID));
@@ -90,7 +91,7 @@ public class ObjectSyncInfoDAO extends BaseDAO
      * @throws IllegalArgumentException  objectZoneSync parameter is null.
      * @throws PersistenceException      A database error occurred.
      */
-    public void save(ObjectZoneSync objectZoneSync) throws IllegalArgumentException, PersistenceException
+    public void save(BasicTransaction tx, ObjectZoneSync objectZoneSync) throws IllegalArgumentException, PersistenceException
     {
         if (objectZoneSync == null)
         {
@@ -99,7 +100,7 @@ public class ObjectSyncInfoDAO extends BaseDAO
 
         try
         {
-        	getCurrentSession().saveOrUpdate(objectZoneSync);
+        	tx.getSession().saveOrUpdate(objectZoneSync);
         }
         catch (HibernateException e)
         {

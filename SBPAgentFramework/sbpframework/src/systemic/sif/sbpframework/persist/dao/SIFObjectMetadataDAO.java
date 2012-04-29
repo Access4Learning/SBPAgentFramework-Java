@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.persistence.PersistenceException;
 
+import systemic.sif.sbpframework.persist.common.BasicTransaction;
 import systemic.sif.sbpframework.persist.model.SIFObject;
 
 /**
@@ -41,11 +42,11 @@ public class SIFObjectMetadataDAO extends BaseDAO
 
 	 */
 	@SuppressWarnings("unchecked")
-    public List<SIFObject> getAllSIFObjectData() throws PersistenceException
+    public List<SIFObject> getAllSIFObjectData(BasicTransaction tx) throws PersistenceException
 	{
 		try
 		{
-			return (List<SIFObject>)getCurrentSession().createQuery("from SIFObject").list();
+			return (List<SIFObject>)tx.getSession().createQuery("from SIFObject").list();
 		}
 		catch (Exception ex)
 		{

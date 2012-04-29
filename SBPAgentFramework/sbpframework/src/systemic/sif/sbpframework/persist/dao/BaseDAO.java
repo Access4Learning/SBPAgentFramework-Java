@@ -18,26 +18,13 @@
 
 package systemic.sif.sbpframework.persist.dao;
 
-import org.hibernate.Hibernate;
-import org.hibernate.Session;
-
-import systemic.sif.sbpframework.persist.common.HibernateUtil;
 
 /**
  * @author Joerg Huber
  *
+ * This class is a 'place holder' at this time. In future some generic methods might be added and therefore
+ * all DAO classes should extend this class to automatically inherit future functionality. 
  */
 public class BaseDAO
-{
-	
-	public Session getCurrentSession()
-	{
-		return HibernateUtil.getSessionFactory().getCurrentSession();
-	}
-	
-	public void loadSubObject(Object proxy)
-	{
-		Hibernate.initialize(proxy);
-	}
-
+{	
 }

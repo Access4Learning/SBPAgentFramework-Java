@@ -29,6 +29,8 @@ import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.criterion.Restrictions;
 
+import systemic.sif.sbpframework.persist.common.BasicTransaction;
+import systemic.sif.sbpframework.persist.common.HibernateUtil;
 import systemic.sif.sbpframework.persist.model.DOCObject;
 import systemic.sif.sbpframework.persist.model.DOCache;
 import au.com.systemic.framework.utils.StringUtils;
@@ -46,7 +48,8 @@ public class DOCacheDAO extends BaseDAO
 	 * This method attempts to retrieve a cached SIF Object based on the object name, object key (flatten key) and the
 	 * agentId. Since each object can only be provided from one zone the zoneID is irrelevant and is not required to
 	 * determine if an object is already cached. If the object isn't cached then null is returned.
-
+	 *
+	 * @param tx The Transaction within this method shall operate. MUST NOT BE NULL!
 	 * @param sifObjectName the name of the SIF Object for which the cached object info shall be returned.
 	 * @param flatKey A flattened key of the cached object that makes this object unique.
 	 * @param applicationId The application ID for which the cached object shall be returned. 
@@ -59,7 +62,7 @@ public class DOCacheDAO extends BaseDAO
 	 * @throws PersistenceException: There is an issue with the underlying database. An error is logged.
 	 */
     @SuppressWarnings("unchecked")
-    public DOCache retrieveCachedObject(String sifObjectName, String flatKey, String applicationId, String zoneId, boolean loadAll) throws IllegalArgumentException, PersistenceException
+    public DOCache retrieveCachedObject(BasicTransaction tx, String sifObjectName, String flatKey, String applicationId, String zoneId, boolean loadAll) throws IllegalArgumentException, PersistenceException
     {
         if (StringUtils.isEmpty(sifObjectName) || StringUtils.isEmpty(flatKey) ||  StringUtils.isEmpty(applicationId)  ||  StringUtils.isEmpty(zoneId))
         {
@@ -68,7 +71,7 @@ public class DOCacheDAO extends BaseDAO
 
         try
         {
-            Criteria criteria = getCurrentSession().createCriteria(DOCache.class)
+            Criteria criteria = tx.getSession().createCriteria(DOCache.class)
                .add(Restrictions.eq("sifObjectName", sifObjectName))
                .add(Restrictions.eq("objectKeyValue", flatKey))
                .add(Restrictions.eq("applicationId", applicationId))
@@ -88,7 +91,7 @@ public class DOCacheDAO extends BaseDAO
             	
             	if (loadAll)
             	{
-            		loadSubObject(cachedObject.getDependentObjects());
+            		HibernateUtil.loadSubObject(cachedObject.getDependentObjects());
             	}
                 return cachedObject;
             }
@@ -103,12 +106,13 @@ public class DOCacheDAO extends BaseDAO
      * This method saves the given object to the DB. all sub-elements are saved as well. After the save the cacheObject
      * will have a new ID if it is a new object.
      * 
+	 * @param tx The Transaction within this method shall operate. MUST NOT BE NULL!
      * @param cacheObject The object to save to the cache.
      * 
      * @throws IllegalArgumentException  cacheObject parameter is null.
      * @throws PersistenceException      A database error occurred.
      */
-    public void save(DOCache cacheObject) throws IllegalArgumentException, PersistenceException
+    public void save(BasicTransaction tx, DOCache cacheObject) throws IllegalArgumentException, PersistenceException
     {
         if (cacheObject == null)
         {
@@ -117,7 +121,7 @@ public class DOCacheDAO extends BaseDAO
 
         try
         {
-        	getCurrentSession().saveOrUpdate(cacheObject);
+        	tx.getSession().saveOrUpdate(cacheObject);
         }
         catch (HibernateException e)
         {
@@ -129,12 +133,13 @@ public class DOCacheDAO extends BaseDAO
      * This method saves the given object to the DB. all sub-elements are saved as well. After the save the cacheObject
      * will have a new ID if it is a new object.
      * 
+	 * @param tx The Transaction within this method shall operate. MUST NOT BE NULL!
      * @param docObject The object to save to the cache.
      * 
      * @throws IllegalArgumentException  cacheObject parameter is null.
      * @throws PersistenceException      A database error occurred.
      */
-    public void save(DOCObject docObject) throws IllegalArgumentException, PersistenceException
+    public void save(BasicTransaction tx, DOCObject docObject) throws IllegalArgumentException, PersistenceException
     {
         if (docObject == null)
         {
@@ -143,7 +148,7 @@ public class DOCacheDAO extends BaseDAO
 
         try
         {
-        	getCurrentSession().saveOrUpdate(docObject);
+        	tx.getSession().saveOrUpdate(docObject);
         }
         catch (HibernateException e)
         {
@@ -162,6 +167,7 @@ public class DOCacheDAO extends BaseDAO
 	 *  - zoneId
      * If one of the above property is empty or null then a IllegalArgumentException is raised.
      * 
+	 * @param tx The Transaction within this method shall operate. MUST NOT BE NULL!
      * @param objectToTest The object to find in the DOC.
      * 
      * @return See description.
@@ -169,9 +175,9 @@ public class DOCacheDAO extends BaseDAO
      * @throws IllegalArgumentException  objectToTest is null or any of the properties listed above is empty or null.
      * @throws PersistenceException      A database error occurred.
      */
-    public DOCObject getCachedDependentObject(DOCObject objectToTest) throws IllegalArgumentException, PersistenceException
+    public DOCObject getCachedDependentObject(BasicTransaction tx, DOCObject objectToTest) throws IllegalArgumentException, PersistenceException
     {
-    	return retrieve(objectToTest);
+    	return retrieve(tx, objectToTest);
     }
     
     /**
@@ -179,6 +185,7 @@ public class DOCacheDAO extends BaseDAO
      * no dependent objects that already been cached then an empty list is returned. If the object defined by its parameters
      * is not cached at all then null is returned and an info message is logged.
      * 
+	 * @param tx The Transaction within this method shall operate. MUST NOT BE NULL!
      * @param sifObjectName The object name for which the dependent object list with already cached objects shall be returned.
      * @param flatKey The key of the above object.
      * @param applicationId The application Id for which the object is registered in the cache.
@@ -189,10 +196,10 @@ public class DOCacheDAO extends BaseDAO
 	 * @throws IllegalArgumentException: Any of the arguments is null.
 	 * @throws PersistenceException: There is an issue with the underlying database. An error is logged.
      */
-    public Set<DOCObject> getAlreadyCachedDependentObjects(String sifObjectName, String flatKey, String applicationId, String zoneId) throws IllegalArgumentException, PersistenceException
+    public Set<DOCObject> getAlreadyCachedDependentObjects(BasicTransaction tx, String sifObjectName, String flatKey, String applicationId, String zoneId) throws IllegalArgumentException, PersistenceException
     {
     	// Get the object from the cache.
-    	DOCache cachedObject = retrieveCachedObject(sifObjectName, flatKey, applicationId, zoneId, true);
+    	DOCache cachedObject = retrieveCachedObject(tx, sifObjectName, flatKey, applicationId, zoneId, true);
     	if (cachedObject == null)
     	{
     		return null;
@@ -211,18 +218,19 @@ public class DOCacheDAO extends BaseDAO
      *  - zoneId
      *  If the object is not cached as a dependent object then no action is taken.
      * 
+	 * @param tx The Transaction within this method shall operate. MUST NOT BE NULL!
      * @param docObject The object for which the dependencies shall be returned.
      * 
      * @throws IllegalArgumentException  docObject is null or any of the properties listed above is empty or null.
      * @throws PersistenceException      A database error occurred.
      */
     @SuppressWarnings("unchecked")
-    public void removeDependency(DOCObject docObject) throws IllegalArgumentException, PersistenceException
+    public void removeDependency(BasicTransaction tx, DOCObject docObject) throws IllegalArgumentException, PersistenceException
     {
-    	DOCObject depObj = retrieve(docObject);
+    	DOCObject depObj = retrieve(tx, docObject);
     	if (depObj != null) // there are waiting objects for this one.
     	{
-	    	Criteria criteria = getCurrentSession().createCriteria(DOCache.class).createAlias("dependentObjects", "depObj")
+	    	Criteria criteria = tx.getSession().createCriteria(DOCache.class).createAlias("dependentObjects", "depObj")
 		        .add(Restrictions.eq("depObj.sifObjectName", docObject.getSifObjectName()))
 		        .add(Restrictions.eq("depObj.objectKeyValue", docObject.getObjectKeyValue()))
 		        .add(Restrictions.eq("depObj.applicationId", docObject.getApplicationId()))
@@ -236,12 +244,12 @@ public class DOCacheDAO extends BaseDAO
 	    			// remove depObj from parents dependent object list
 	    			parentObj.getDependentObjects().remove(depObj);
 	    			parentObj.setRemainingDependencies(parentObj.getDependentObjects().size());
-	    			getCurrentSession().saveOrUpdate(parentObj);
+	    			tx.getSession().saveOrUpdate(parentObj);
 	        	}
 	        }
 	        
 	        // This is possibly not required because of the 'cascade=all,delete-orphan' in the hibernate mapping
-	        getCurrentSession().delete(depObj); 
+	        tx.getSession().delete(depObj); 
     	}
     }
     
@@ -253,6 +261,7 @@ public class DOCacheDAO extends BaseDAO
      * separately for each zone by the agent. If there are no cached and not yet requested objects for the
      * given parameters then an empty list is returned.
      * 
+	 * @param tx The Transaction within this method shall operate. MUST NOT BE NULL!
      * @param sifObjectName The SIF Object names to search for (i.e StudentPersonal)
      * @param applicationId Only return objects marked for this application.
      * @param zoneId Only return objects marked for this zone.
@@ -263,7 +272,7 @@ public class DOCacheDAO extends BaseDAO
      * @throws PersistenceException      A database error occurred.
      */
     @SuppressWarnings("unchecked")
-    public List<DOCObject> getNotYetRequestedObjects(String sifObjectName, String applicationId, String zoneId) throws IllegalArgumentException, PersistenceException
+    public List<DOCObject> getNotYetRequestedObjects(BasicTransaction tx, String sifObjectName, String applicationId, String zoneId) throws IllegalArgumentException, PersistenceException
     {
 		if (StringUtils.isEmpty(sifObjectName) || StringUtils.isEmpty(applicationId) || StringUtils.isEmpty(zoneId))
 		{
@@ -271,7 +280,7 @@ public class DOCacheDAO extends BaseDAO
 		}
         try
         {
-            Criteria criteria = getCurrentSession().createCriteria(DOCObject.class)
+            Criteria criteria = tx.getSession().createCriteria(DOCObject.class)
                .add(Restrictions.eq("sifObjectName", sifObjectName))
                .add(Restrictions.eq("applicationId", applicationId))
                .add(Restrictions.eq("zoneId", zoneId))
@@ -290,6 +299,7 @@ public class DOCacheDAO extends BaseDAO
      * remaining dependencies. These are the candidates do be removed later and be processed by the appropriate 
      * subscriber. If there are no Cached Objects without dependencies then an empty list is returned.
      *  
+	 * @param tx The Transaction within this method shall operate. MUST NOT BE NULL!
      * @param sifObjectName The type of cached objects to be returned.
      * @param applicationId The application for which the objects shall be returned.
      * @param agentId The agent for which to get the object list. 
@@ -300,7 +310,7 @@ public class DOCacheDAO extends BaseDAO
      * @throws PersistenceException      A database error occurred. Error is logged.
      */
     @SuppressWarnings("unchecked")
-    public List<DOCache> getObjectsWithoutDependencies(String sifObjectName, String applicationId, String agentId) throws IllegalArgumentException, PersistenceException
+    public List<DOCache> getObjectsWithoutDependencies(BasicTransaction tx, String sifObjectName, String applicationId, String agentId) throws IllegalArgumentException, PersistenceException
     {
 		if (StringUtils.isEmpty(sifObjectName) || StringUtils.isEmpty(applicationId) || StringUtils.isEmpty(agentId))
 		{
@@ -308,7 +318,7 @@ public class DOCacheDAO extends BaseDAO
 		}
         try
         {
-            Criteria criteria = getCurrentSession().createCriteria(DOCache.class)
+            Criteria criteria = tx.getSession().createCriteria(DOCache.class)
                .add(Restrictions.eq("sifObjectName", sifObjectName))
                .add(Restrictions.eq("applicationId", applicationId))
                .add(Restrictions.eq("agentId", agentId))
@@ -327,6 +337,7 @@ public class DOCacheDAO extends BaseDAO
      * older than the current date and time. These are the candidates that need to either be removed or 
      * re-requested by the agent. If there are no expired objects then an empty list is returned.
      * 
+	 * @param tx The Transaction within this method shall operate. MUST NOT BE NULL!
      * @param applicationId Only return expired objects for this application.
      * @param agentId Only return expired object that were initially cached by this agent.
      * 
@@ -336,7 +347,7 @@ public class DOCacheDAO extends BaseDAO
      * @throws PersistenceException      A database error occurred. Error is logged.
      */
     @SuppressWarnings("unchecked")
-    public List<DOCache> getExpiredObjects(String applicationId, String agentId) throws IllegalArgumentException, PersistenceException
+    public List<DOCache> getExpiredObjects(BasicTransaction tx, String applicationId, String agentId) throws IllegalArgumentException, PersistenceException
     {
 		if (StringUtils.isEmpty(applicationId) || StringUtils.isEmpty(agentId))
 		{
@@ -344,7 +355,7 @@ public class DOCacheDAO extends BaseDAO
 		}
         try
         {
-            Criteria criteria = getCurrentSession().createCriteria(DOCache.class)
+            Criteria criteria = tx.getSession().createCriteria(DOCache.class)
                .add(Restrictions.eq("applicationId", applicationId))
                .add(Restrictions.eq("agentId", agentId))
                .add(Restrictions.gt("remainingDependencies", 0))
@@ -362,17 +373,18 @@ public class DOCacheDAO extends BaseDAO
      * This method removes the given cached dependent object. If the object is null then no action is taken. The
      * object's id property must be set for this method to work.
      * 
+	 * @param tx The Transaction within this method shall operate. MUST NOT BE NULL!
      * @param docObject The object to remove from the DOC_OBJECT table.
      * 
      * @throws PersistenceException      A database error occurred.
      */
-    public void removeDependentObject(DOCObject docObject)throws PersistenceException
+    public void removeDependentObject(BasicTransaction tx, DOCObject docObject)throws PersistenceException
     {
         try
         {
             if ((docObject != null) && (docObject.getId() != null) && (docObject.getId().longValue() > 0))
             {
-            	getCurrentSession().delete(docObject);
+            	tx.getSession().delete(docObject);
             }
         }
         catch (HibernateException e)
@@ -385,18 +397,19 @@ public class DOCacheDAO extends BaseDAO
      * This method removes the given object and all its dependencies from the cache. If the object is null then
      * no action is taken.
      * 
+	 * @param tx The Transaction within this method shall operate. MUST NOT BE NULL!
      * @param cacheObject The object to remove from the DO Cache.
      * 
      * @throws PersistenceException      A database error occurred.
      */
-    public void removeCachedObject(DOCache cacheObject)throws PersistenceException
+    public void removeCachedObject(BasicTransaction tx, DOCache cacheObject)throws PersistenceException
     {
         try
         {
             if (cacheObject != null)
             {
             	Set<DOCObject> depObjectList = cacheObject.getDependentObjects();
-            	getCurrentSession().delete(cacheObject);
+            	tx.getSession().delete(cacheObject);
             	
             	if (depObjectList != null)
             	{
@@ -405,7 +418,7 @@ public class DOCacheDAO extends BaseDAO
             			// If the number of parents is 1 then this is the last dependency and it can be removed.
             			if (depObj.getParents().size() <= 1)
             			{
-            				removeDependentObject(depObj);
+            				removeDependentObject(tx, depObj);
             			}
             		}
             	}
@@ -430,11 +443,13 @@ public class DOCacheDAO extends BaseDAO
      *  - zoneId
      *  If the object is not cached as a dependent object then no action is taken.
      *  
+	 * @param tx The Transaction within this method shall operate. MUST NOT BE NULL!
+     *  
     * @throws IllegalArgumentException  docObject is null or any of the properties listed above is empty or null.
     * @throws PersistenceException      A database error occurred.
     */
    @SuppressWarnings("unchecked")
-   public DOCObject retrieve(DOCObject docObject) throws IllegalArgumentException, PersistenceException
+   public DOCObject retrieve(BasicTransaction tx, DOCObject docObject) throws IllegalArgumentException, PersistenceException
    {
 		if (docObject == null)
 		{
@@ -448,7 +463,7 @@ public class DOCacheDAO extends BaseDAO
 			throw new IllegalArgumentException("Some of the following properties in the 'docObject' are empty or null: sifObjectName, applicationId, zoneId, objectKeyValue");
 		}
 
-		Criteria criteria = getCurrentSession().createCriteria(DOCObject.class)
+		Criteria criteria = tx.getSession().createCriteria(DOCObject.class)
 		        .add(Restrictions.eq("sifObjectName", docObject.getSifObjectName()))
 		        .add(Restrictions.eq("objectKeyValue", docObject.getObjectKeyValue()))
 		        .add(Restrictions.eq("applicationId", docObject.getApplicationId()))
