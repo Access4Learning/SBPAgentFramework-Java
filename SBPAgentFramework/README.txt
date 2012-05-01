@@ -50,7 +50,7 @@ Note that if you want to use this option but don't have the client installed, it
 downloaded from http://git-scm.com/download.
 
 #########################################################################################################
-# Versions: Current version is v1.1-beta
+# Versions: Current version is v1.2-beta
 #########################################################################################################
 
 Upgrade instructions from v1.0-beta to v1.1-beta
@@ -73,4 +73,16 @@ b) Copy the <sbp_rootDir>/build/dist/sbpframework-au_1.2-v1.1-beta.jar into the 
    sbpframework-au_1.2-v1.0-beta.jar from your project.
 c) Change classpath in your startup scripts to point to this new jar file or use the latest version of the startAgent.bat/sh
    from <sbp_rootDir>/scripts.
+   
+Upgrade instructions from v1.1-beta to v1.2-beta
+================================================
+This version doesn't require any scripts to be run. Simply use the latest 
+<sbp_rootDir>/build/dist/sbpframework-au_1.2-v1.2-beta.jar and add it to your project.
+
+*********************************** IMPORTANT ***************************************************************
+PLEASE REFER TO THE DEVELOPER'S GUIDE SECTION 3.3 AS IMPORTANT INSTRUCTIONS HAVE BEEN ADDED IN RELATION TO 
+DATABASES USED IN A PRODUCTION ENVIRONMENT.
+*************************************************************************************************************
+
+
    
