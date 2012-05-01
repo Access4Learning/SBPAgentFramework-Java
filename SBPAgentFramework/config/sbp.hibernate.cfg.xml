@@ -11,12 +11,51 @@
         <!-- ***************** -->
 		<property name="show_sql">true</property>
 		<property name="format_sql">true</property>
-		<property name="dialect">systemic.sif.sbpframework.persist.common.SQLiteDialect</property>
-		<property name="connection.driver_class">org.sqlite.JDBC</property>
-		<property name="connection.url">jdbc:sqlite:/Development/GitHubRepositories/SBPAgentFramework/SBPAgentFramework/DB/SCF.sqliteDB</property>
-        <!-- property name="connection.url">jdbc:sqlite:/Development/SBPDemo/DB/SCF.sqliteDB</property-->
-		<property name="connection.username"></property>
-		<property name="connection.password"></property>
+
+        <!-- SQLite Embedded -->
+         
+        <property name="dialect">systemic.sif.sbpframework.persist.common.SQLiteDialect</property>
+        <property name="connection.driver_class">org.sqlite.JDBC</property>
+        <!-- property name="connection.url">jdbc:sqlite:/Development/GitHubRepositories/SBPAgentFramework/SBPAgentFramework/DB/SCF.sqliteDB</property-->
+        <property name="connection.username"></property>
+        <property name="connection.password"></property>
+        <property name="connection.url">jdbc:sqlite:/Development/SBPAgentFramework/DB/SCF.sqliteDB</property>
+
+        <!-- ******************* -->
+        <!-- MySQL client/server -->
+        <!-- ******************* -->
+        <!-- property name="hibernate.default_schema">SCF</property-->
+        <!-- 
+        <property name="dialect">org.hibernate.dialect.MySQLInnoDBDialect</property>
+        <property name="connection.driver_class">com.mysql.jdbc.Driver</property>
+        <property name="connection.url">jdbc:mysql://localhost:3306/SCF</property>
+        <property name="connection.username">root</property>
+        <property name="connection.password"></property>
+        -->
+
+        <!-- ******************** -->
+        <!-- Oracle client/server -->
+        <!-- ******************** -->
+        <!-- property name="hibernate.default_schema">SCF</property-->
+        <!-- 
+        <property name="dialect">org.hibernate.dialect.OracleDialect</property>
+        <property name="connection.driver_class">oracle.jdbc.OracleDriver</property>
+        <property name="connection.url">jdbc:oracle:thin:@localhost:1521:XE</property>
+        <property name="connection.username">scf</property>
+        <property name="connection.password">scf</property>
+        -->
+        
+        <!-- ********************** -->
+        <!-- Postgres client/server -->
+        <!-- ********************** -->
+        <!-- property name="hibernate.default_schema">SCF</property-->
+        <!-- 
+        <property name="dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+        <property name="connection.driver_class">org.postgresql.Driver</property>
+        <property name="connection.url">jdbc:postgresql://localhost:5432/scf</property>
+        <property name="connection.username">ez7b7j14</property>
+        <property name="connection.password"></property>
+        -->
 
         <!-- ********************** -->
         <!--  Connection Pool Setup -->
@@ -35,11 +74,10 @@
         <property name="hibernate.c3p0.min_size">10</property>
 
         <!-- =============================================================== -->
-        <!-- Miscellaneous properties                                        -->
+        <!-- Miscellaneous properties (currently not used)                   -->
         <!-- =============================================================== -->
         <!-- Supply a custom strategy for the scoping of the "current" Session. -->
-      
-        <property name="hibernate.current_session_context_class">thread</property>
+        <!-- property name="hibernate.current_session_context_class">thread</property-->
         <!-- property name="hibernate.current_session_context_class">org.hibernate.context.ThreadLocalSessionContext</property-->   
         <!-- property name="hibernate.current_session_context_class">org.hibernate.transaction.JTATransactionFactory</property --> 
         <!-- property name="hibernate.current_session_context_class">jta</property-->   
