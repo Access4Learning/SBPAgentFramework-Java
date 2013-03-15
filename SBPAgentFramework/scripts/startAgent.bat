@@ -37,7 +37,7 @@ rem ######################################################################
 rem # set the config dir and the main executable jar in the classpath
 rem #######################################################################
 
-set AGENT_CLASS_PATH=%AGENT_CLASS_PATH%;%CONFIG_PATH%;%EXE_JAR_PATH%\sbpframework-au_1.2-v1.1-beta.jar
+set AGENT_CLASS_PATH=%AGENT_CLASS_PATH%;%CONFIG_PATH%;%EXE_JAR_PATH%\sbpframework-au_1.3-v1.2-beta.jar
 
 set AGENT_CLASS=%1%
 set AGENT_ID=%2%
