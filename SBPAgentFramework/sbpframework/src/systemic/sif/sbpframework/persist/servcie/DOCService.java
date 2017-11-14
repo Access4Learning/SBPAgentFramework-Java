@@ -24,13 +24,15 @@ import java.util.List;
 
 import javax.persistence.PersistenceException;
 
+import org.apache.log4j.Logger;
+
+import au.com.systemic.framework.utils.DateUtils;
+import au.com.systemic.framework.utils.StringUtils;
 import openadk.library.ADKSchemaException;
 import openadk.library.Element;
 import openadk.library.SIFDataObject;
-
-import org.apache.log4j.Logger;
-
 import systemic.sif.sbpframework.common.utils.SIFObjectMetadataCache;
+import systemic.sif.sbpframework.exception.InvalidKeyException;
 import systemic.sif.sbpframework.persist.common.BasicTransaction;
 import systemic.sif.sbpframework.persist.dao.BaseDAO;
 import systemic.sif.sbpframework.persist.dao.DOCacheDAO;
@@ -40,8 +42,6 @@ import systemic.sif.sbpframework.persist.model.DependentKeyInfo;
 import systemic.sif.sbpframework.persist.model.DependentObjectInfo;
 import systemic.sif.sbpframework.persist.model.SIFObject;
 import systemic.sif.sbpframework.persist.model.SIFObjectKey;
-import au.com.systemic.framework.utils.DateUtils;
-import au.com.systemic.framework.utils.StringUtils;
 
 /**
  * @author Joerg Huber
@@ -73,9 +73,10 @@ public class DOCService extends DBService
 	 * 
      * @throws PersistenceException If there is an error in the underlying DB. The error is logged.
      * @throws IllegalArgumentException If any of the parameters is null or empty.
+	 * @throws InvalidKeyException Processing of key values in either the object itself or its dependent objects failed. Error is logged.
      * @throws Exception some underlying issue. Error is logged.
 	 */
-	public List<DOCObject> getDependenciesFromSIFObjectAndCache(SIFDataObject sifObject, String applicationId, String zoneId) throws PersistenceException, IllegalArgumentException 
+	public List<DOCObject> getDependenciesFromSIFObjectAndCache(SIFDataObject sifObject, String applicationId, String zoneId) throws PersistenceException, IllegalArgumentException, InvalidKeyException 
 	{
 		if ((sifObject == null) || StringUtils.isEmpty(zoneId) || StringUtils.isEmpty(applicationId))
 		{
@@ -344,8 +345,9 @@ public class DOCService extends DBService
      * 
      * @throws PersistenceException If there are any errors with the underlying data store. Error is logged.
      * @throws IllegalArgumentException sifObject, applicationId or zoneId is empty or null. Metadata Cache is not available.
+     * @throws InvalidKeyException The Key of the given object is invalid (null, empty or key element doesn't exist). Error logged.
      */
-    public void checkAndRemoveDependency(SIFDataObject sifObject, String applicationId, String zoneId) throws IllegalArgumentException, PersistenceException
+    public void checkAndRemoveDependency(SIFDataObject sifObject, String applicationId, String zoneId) throws IllegalArgumentException, PersistenceException, InvalidKeyException
     {
     	checkMetadataCache();
     	if ((sifObject == null) || StringUtils.isEmpty(zoneId) || StringUtils.isEmpty(applicationId))
@@ -660,8 +662,9 @@ public class DOCService extends DBService
      * @return The flattened key of the SIFObject as described above.
      * 
      * @throws IllegalArgumentException Object is null or doesn't contain the primary key as expected by the SIF Spec.
+	 * @throws InvalidKeyException The primary key of the object is not set or accessible (i.e. value is null or empty).
      */
-    public String extractFlatKey(SIFDataObject sifObject) throws IllegalArgumentException
+    public String extractFlatKey(SIFDataObject sifObject) throws IllegalArgumentException, InvalidKeyException
     {
 		if (metadataCache != null) // we cannot determine info about object if cache is not enabled.
 		{
@@ -683,7 +686,7 @@ public class DOCService extends DBService
      * @throws IllegalArgumentException Metadata Cache is not available. Error is logged.
      * 
      */
-    public List<DOCObject> extractDependentObjectsFromSIFObject(SIFDataObject sifObject) throws PersistenceException, IllegalArgumentException
+    public List<DOCObject> extractDependentObjectsFromSIFObject(SIFDataObject sifObject) throws PersistenceException, IllegalArgumentException, InvalidKeyException
     {
     	checkMetadataCache();
     	List<DOCObject> dependencies = null;
@@ -707,6 +710,13 @@ public class DOCService extends DBService
     			}		
     		}
     	}
+        catch (InvalidKeyException ex)
+        {
+            // error already logged accordingly. Just re-throw exception. We need to deal with this exception that way
+            // because we don't want to deal with it in the exceptionMapper().
+//            logger.error("Failed to determine dependencies for object:\n"+sifObject.toXML()+"\n"+ex.getMessage());
+            throw ex;
+        }
     	catch (Exception ex)
     	{
     		exceptionMapper(ex, "Failed to determine dependencies for object:\n"+sifObject.toXML(), true, false);
@@ -718,23 +728,31 @@ public class DOCService extends DBService
     /*---------------------*/
     /*-- Private Methods --*/
     /*---------------------*/
-	private void extractDependentObjects(SIFDataObject sifObject, SIFObject sourceObj,  DependentObjectInfo dependendObjInfo, List<DOCObject> dependencies) throws ADKSchemaException
+	private void extractDependentObjects(SIFDataObject sifObject, SIFObject sourceObj,  DependentObjectInfo dependendObjInfo, List<DOCObject> dependencies) throws InvalidKeyException
 	{
+	    
 		if (dependendObjInfo.getListOfObjects())
 		{
 			// Deal with the case where there are many dependent objects of the same type (i.e. TeachingGroup->TeachingGroupStudent)
 			int idx = 1;
 			String xpathToListObj = dependendObjInfo.getXpathToList()+"["+idx+"]";
-			while (sifObject.getElementOrAttribute(xpathToListObj) != null)
-			{
-				DOCObject depObj = extractDependentObjectInfo(sifObject, sourceObj, dependendObjInfo, xpathToListObj+"/");
-				if (depObj != null)// Found valid dependent object
-				{
-					dependencies.add(depObj);
-				}
-				idx++;
-				xpathToListObj = dependendObjInfo.getXpathToList()+"["+idx+"]";
-			}
+			try
+            {
+                while (sifObject.getElementOrAttribute(xpathToListObj) != null)
+                {
+                	DOCObject depObj = extractDependentObjectInfo(sifObject, sourceObj, dependendObjInfo, xpathToListObj+"/");
+                	if (depObj != null)// Found valid dependent object
+                	{
+                		dependencies.add(depObj);
+                	}
+                	idx++;
+                	xpathToListObj = dependendObjInfo.getXpathToList()+"["+idx+"]";
+                }
+            }
+            catch (ADKSchemaException e)
+            {
+               throw new InvalidKeyException("Child object for element/attribute '"+xpathToListObj+"' doesn't exist. This is invalid.");
+            }
 		}
 		else
 		{
@@ -746,7 +764,7 @@ public class DOCService extends DBService
 		}
 	}
 
-	private DOCObject extractDependentObjectInfo(SIFDataObject sifObject, SIFObject sourceObj,  DependentObjectInfo dependendObjInfo, String xpathToListObject) throws ADKSchemaException
+	private DOCObject extractDependentObjectInfo(SIFDataObject sifObject, SIFObject sourceObj,  DependentObjectInfo dependendObjInfo, String xpathToListObject) throws InvalidKeyException
 	{
 		DOCObject depObj = new DOCObject();
 		SIFObject parentObject = dependendObjInfo.getParentObject();
@@ -761,10 +779,22 @@ public class DOCService extends DBService
 		    String parentName = null;
 		    if (indicatorInfo != null)
 		    {
-		        Element elem = sifObject.getElementOrAttribute(xpathToListObject+indicatorInfo.getXpath());
+		        Element elem;
+                try
+                {
+                    elem = sifObject.getElementOrAttribute(xpathToListObject+indicatorInfo.getXpath());
+                }
+                catch (ADKSchemaException e)
+                {
+                    throw new InvalidKeyException("The element/attribute '"+xpathToListObject+indicatorInfo.getXpath()+"' does not exist. This an invalid object.");
+                }
                 if (elem != null)
                 {
                     parentName = elem.getTextValue();
+                    if (StringUtils.isEmpty(parentName))
+                    {
+                        throw new InvalidKeyException("The element/attribute '"+xpathToListObject+indicatorInfo.getXpath()+"' is empty or null. This an invalid object.");                        
+                    }
                     
                     // Do we need to ignore this dependency?
                     for (SIFObject indicatorySIFObj : indicatorInfo.getValidIndicatorList())
@@ -778,7 +808,8 @@ public class DOCService extends DBService
                 }
                 else
                 {
-                    logger.error("There is no indicator defined for the Object "+ sourceObj.getName() + " with key of "+indicatorInfo.getXpath());
+//                    logger.error("There is no indicator defined for the Object "+ sourceObj.getName() + " with key of "+indicatorInfo.getXpath());
+                    throw new InvalidKeyException("There is no indicator defined for the Object "+ sourceObj.getName() + " with key of "+indicatorInfo.getXpath());
                 }
 		    }
 		}
@@ -799,63 +830,93 @@ public class DOCService extends DBService
 			keyForDependentObject.add(new SIFObjectKey(null, key.getXpath(), key.getSortOrder()));
 		}
 
-		// Extract key values from actual SIF Object
-		if (extractDependentKeyValuesFromSIFObject(sifObject, xpathToListObject, dependendObjInfo, sourceObj, keyForDependentObject))
-		{
-			depObj.setKeyForDependentObject(keyForDependentObject);
+		// Extract key values from actual SIF Object. This will throw an exception if anything is invalid. Error is already logged.
+		extractDependentKeyValuesFromSIFObject(sifObject, xpathToListObject, dependendObjInfo, sourceObj, keyForDependentObject);
+		
+		// If we get here without exception all the key information is valid.
+		depObj.setKeyForDependentObject(keyForDependentObject);
+		
+		// Flatten key and store it in the appropriate property.
+		depObj.setObjectKeyValue(flattenOrderedKey(keyForDependentObject, parentObject.getKeySeparator()));
+		depObj.setRequested(Boolean.FALSE);
+		
+		return depObj;
 			
-			// Flatten key and store it in the appropriate property.
-			depObj.setObjectKeyValue(flattenOrderedKey(keyForDependentObject, parentObject.getKeySeparator()));
-			depObj.setRequested(Boolean.FALSE);
-			
-			return depObj;
-		}
-		else
-		{
-			logger.error("Dependency "+ depObj.getSifObjectName() + " for object "+sourceObj.getName()+" not added. See prvious error log entry for details.");				
-			return null;
-		}
+//		else
+//		{
+//			logger.error("Dependency "+ depObj.getSifObjectName() + " for object "+sourceObj.getName()+" not added. See prvious error log entry for details.");				
+//			return null;
+//		}
 	}
 	
-	private boolean extractDependentKeyValuesFromSIFObject(SIFDataObject sifObject, String xpathPrefix, DependentObjectInfo dependendInfo, SIFObject sourceObj, List<SIFObjectKey> orderedKeyForParentObj) throws ADKSchemaException
+	private void extractDependentKeyValuesFromSIFObject(SIFDataObject sifObject, String xpathPrefix, DependentObjectInfo dependendInfo, SIFObject sourceObj, List<SIFObjectKey> orderedKeyForParentObj) throws InvalidKeyException
 	{
-		boolean allKeysHaveValue = true;
-		List<DependentKeyInfo> dependentKeyInfoList = dependendInfo.getOrderedKeyInfoList();
+//		boolean allKeysHaveValue = true;
+	    String keyErrorMsg = null;
+	    try
+	    {
+    		List<DependentKeyInfo> dependentKeyInfoList = dependendInfo.getOrderedKeyInfoList();
+    
+    		// Iterate through keyForDependentObject to see which key values we must retrieve and in what sort_order.
+    		if (dependentKeyInfoList.size() != orderedKeyForParentObj.size())
+    		{
+    		    keyErrorMsg = "There number of key components of object ("+sifObject.getElementDef().name()+") doesn't match the number of key components of the dependent object ("+dependendInfo.parentObject.getName()+").";
+//    			logger.error("There number of key components of object ("+sifObject.getElementDef().name()+") doesn't match the number of key components of the dependent object ("+dependendInfo.parentObject.getName()+").");
+//    			allKeysHaveValue = false;
+    		}
+    		else
+    		{
+    			for (int i=0; i<orderedKeyForParentObj.size(); i++)
+    			{
+    				SIFObjectKey parentObjKey = orderedKeyForParentObj.get(i);
+    				
+    				// extract the key value from the SIF Object based on xPath of dependent object info
+    				Element elem = sifObject.getElementOrAttribute(xpathPrefix+dependentKeyInfoList.get(i).getXpath());
+    				if (elem != null)
+    				{
+                        String value = elem.getTextValue();
+                        if (StringUtils.notEmpty(value))
+                        {
+                            parentObjKey.setValue(elem.getTextValue());
+                        }
+                        else
+                        {
+                            keyErrorMsg = "The foreign key "+ xpathPrefix+dependentKeyInfoList.get(i).getXpath() +" for the Object "+ sourceObj.getName() + " is null or empty";
+//                            logger.error("The key value for the Object "+ sourceObj.getName() + " with key of "+xpathPrefix+dependentKeyInfoList.get(i).getXpath() + " is null or empty");                     
+//                            allKeysHaveValue = false;
+                        }
+    				}
+    				else
+    				{
+    				    keyErrorMsg = "The foreign key "+ xpathPrefix+dependentKeyInfoList.get(i).getXpath() + "for the Object "+ sourceObj.getName() + " does not exits.";
+//    					logger.error("There is no key defined for the Object "+ sourceObj.getName() + " with key of "+dependentKeyInfoList.get(i).getXpath());
+//    					allKeysHaveValue = false;
+    				}
+    			}			
+    		}
+	    }
+	    catch (ADKSchemaException ex)
+        {
+	        keyErrorMsg = "Failed to extract dependend key from "+sourceObj.getName()+"\n"+sifObject.toXML();
+//            String errmsg = "Failed to extract dependend key from "+sourceObj.getName()+"\n"+sifObject.toXML();
+//            logger.error(errmsg);
+//            throw new InvalidKeyException(errmsg, ex);          
+        }
+	    if (keyErrorMsg != null) // we had an issue in generating the depended key objects. 
+	    {
+	        logger.error(keyErrorMsg);
+	        throw new InvalidKeyException(keyErrorMsg);        
+	    }
 
-		// Iterate through keyForDependentObject to see which key values we must retrieve and in what sort_order.
-		if (dependentKeyInfoList.size() != orderedKeyForParentObj.size())
-		{
-			logger.error("There number of key components of object ("+sifObject.getElementDef().name()+") doesn't match the number of key components of the dependent object ("+dependendInfo.parentObject.getName()+").");
-			allKeysHaveValue = false;
-		}
-		else
-		{
-			for (int i=0; i<orderedKeyForParentObj.size(); i++)
-			{
-				SIFObjectKey parentObjKey = orderedKeyForParentObj.get(i);
-				
-				// extract the key value from the SIF Object based on xPath of dependent object info
-				Element elem = sifObject.getElementOrAttribute(xpathPrefix+dependentKeyInfoList.get(i).getXpath());
-				if (elem != null)
-				{
-					parentObjKey.setValue(elem.getTextValue());
-				}
-				else
-				{
-					logger.error("There is no key defined for the Object "+ sourceObj.getName() + " with key of "+dependentKeyInfoList.get(i).getXpath());
-					allKeysHaveValue = false;
-				}
-			}			
-		}
 
-		return allKeysHaveValue;
+//		return allKeysHaveValue;
 	}
     
 	/*
 	 * This method attempts to extract the primary key of the given SIFObject. If it fails then an IllegalArgumentException is
 	 * returned and the error is logged accordingly.
 	 */
-	private String extractFlatKey(SIFDataObject sifObject, List<SIFObjectKey> orderedKeylist, String separator)  throws IllegalArgumentException
+	private String extractFlatKey(SIFDataObject sifObject, List<SIFObjectKey> orderedKeylist, String separator)  throws IllegalArgumentException, InvalidKeyException
 	{
 		boolean allKeysHaveValue = true;
 		try
@@ -868,7 +929,16 @@ public class DOCService extends DBService
 				Element elem = sifObject.getElementOrAttribute(key.getXpath());
 				if (elem != null)
 				{
-					key.setValue(elem.getTextValue());
+				    String value = elem.getTextValue();
+				    if (StringUtils.notEmpty(value))
+				    {
+				        key.setValue(elem.getTextValue());
+				    }
+				    else
+				    {
+	                    logger.error("The key value for the Object "+ sifObject.getElementDef().name() + " with key of "+key.getXpath() + " is null or empty");				        
+	                    allKeysHaveValue = false;
+				    }
 				}
 				else
 				{
@@ -884,14 +954,14 @@ public class DOCService extends DBService
 			{
 	    		String errmsg = "Failed to extract and flatten primary key from "+sifObject.getElementDef().name()+". See prvious error log entry for details.";
 	    		logger.error(errmsg);
-	    		throw new IllegalArgumentException(errmsg+"\n"+sifObject.toXML());
+	    		throw new InvalidKeyException(errmsg);
 			}
 		}
 		catch (ADKSchemaException ex)
 		{
-    		String errmsg = "Failed to extract and flatten primary key from "+sifObject.getElementDef().name()+"\n"+sifObject.toXML();
+    		String errmsg = "Failed to extract and flatten primary key from "+sifObject.getElementDef().name();
     		logger.error(errmsg);
-    		throw new IllegalArgumentException(errmsg, ex);			
+    		throw new InvalidKeyException(errmsg, ex);			
 		}
 	}
 
@@ -924,7 +994,7 @@ public class DOCService extends DBService
 	}
 	
 	/*
-	 * This method takes the given exception and simply re-throws it if it is a IllegalArgumentException, PersistenceException.
+	 * This method takes the given exception and simply re-throws it if it is a IllegalArgumentException, PersistenceException, InvalidKeyException.
 	 * Any other exception is mapped to a persistence exception since this service mainly deals with DB operations.
 	 * The given errorMsg is added to the IllegalArgumentException or PersistenceException if addErrorMsgToStandardEx is
 	 * true. If the exception is any other type then the error message is added regardless addErrorMsgToStandardEx parameter.
@@ -952,7 +1022,15 @@ public class DOCService extends DBService
 			}
 			throw (PersistenceException)ex;			
 		}
-		
+//        if (ex instanceof InvalidKeyException)
+//        {
+//            if (addErrorMsgToStandardEx)
+//            {
+//                throw new InvalidKeyException(errorMsg, ex);
+//            }
+//            throw (InvalidKeyException)ex;
+//        }
+        
 		// If we get here the ex is of any other type
 		throw new PersistenceException(errorMsg, ex);
 	}
