@@ -84,5 +84,18 @@ PLEASE REFER TO THE DEVELOPER'S GUIDE SECTION 3.3 AS IMPORTANT INSTRUCTIONS HAVE
 DATABASES USED IN A PRODUCTION ENVIRONMENT.
 *************************************************************************************************************
 
+Upgrade instructions from v1.2-beta to v1.3-beta, Nov 14, 2017
+==============================================================
+Simply use the latest <sbp_rootDir>/build/dist/sbpframework-au_1.2-v1.3-beta.jar and add it to your project.
+
+Note the SBPBaseSubscriber has an additional abstract method called onKeyError(). For usage of this method please refer to javadoc
+and the SBPAgentFramework DevelopersGuide v1.3, section 5.4.3.2. Due to the addition of this method all subscriber classes that
+extend the SBPBaseSubscriber will show a compilation error. To resolve this error simply add the following method in each subscriber:
+
+    @Override
+    public void onKeyError(SIFDataObject sifObject, Zone zone, boolean isEvent, EventAction eventAction, InvalidKeyException invalidKeyException)
+    {
+        //TODO: Implement your error handling for invalid objects.
+    }
 
    
