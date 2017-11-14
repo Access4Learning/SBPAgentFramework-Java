@@ -30,6 +30,7 @@ import openadk.library.Query;
 import openadk.library.SIFDataObject;
 import openadk.library.Zone;
 import systemic.sif.sbpframework.common.utils.SIFObjectUtils;
+import systemic.sif.sbpframework.exception.InvalidKeyException;
 import systemic.sif.sbpframework.persist.model.DOCObject;
 import systemic.sif.sbpframework.persist.model.DOCache;
 import systemic.sif.sbpframework.persist.model.SIFObject;
@@ -104,6 +105,30 @@ public abstract class SBPBaseSubscriber extends SyncSubscriber
 	 */
 	public abstract boolean doesObjectExistInTargetSystem(String sifObjectName, List<SIFObjectKey> keyValues, SIFDataObject sifObject);
 	
+	/**
+	 * This method is called if the processing of the object failed due to invalid key data. Key data is either the object's primary key or
+	 * the foreign keys of the referenced objects if they are marked as a dependency to be resolved in the Dependent Object Cache. Typical 
+	 * reasons for an invalid primary or foreign key are:<br/><br/>
+	 * 
+	 * - Key element/attribute (i.e. refId) missing<br/>
+	 * - Key element/attribute (i.e. refId) null or empty<br/><br/>
+	 * 
+	 * This method will be called as part of processEvent() or processResponse() method if the key conditions are not met when processing
+	 * a SIF Event or SIF Response. The offending object is passed to the 'sifObject' parameter of this method. If the failure is caused by
+	 * processing and event then the 'isEvent' parameter is set to TRUE and the 'eventAction' will hold ADD, CHANGE or DELETE to indicate the
+	 * event type. If the failure is cause by processing a response then the 'isEvent' parameter is set to FALSE and the 'eventAction' is null.
+	 * The cause of the failure is part of the'invalidKeyException' parameter. Since this parameter is an exception, the error message can
+	 * be retrieved with the standard invalidKeyException.getMessage() method. It is up to the implementation if something else should be
+	 * done with the exception.
+	 * 
+	 * @param sifObject The object that caused the error, i.e. has invalid primary or foreign keys.
+	 * @param zone The zone from which the object was received.
+	 * @param isEvent Set to TRUE if the error occurred during event processing. FALSE if the error occurred during response processing.
+	 * @param eventAction If the error occurred during event processing then this value will hold the event action such as ADD, CHANGE or DELETE.
+	 *                    If the error occurred during response processing then this value will set to null!
+	 * @param invalidKeyException Holds information about the invalid key(s).
+	 */
+    public abstract void onKeyError(SIFDataObject sifObject, Zone zone, boolean isEvent, EventAction eventAction, InvalidKeyException invalidKeyException);
 	
 	/**
 	 * Default constructor<p>
@@ -246,28 +271,36 @@ public abstract class SBPBaseSubscriber extends SyncSubscriber
 	@Override
 	protected boolean preProcessEvent(SIFDataObject sifObject, EventAction eventAction, Zone zone, MappingInfo mappingInfo)
     {
-		//Check if object required caching.
-		boolean cached = cacheEventIfRequired(sifObject, eventAction, zone);
-		
-		// If it was cached then we do not want to do any more processing.
-		if (cached)
-		{
-			logger.debug(eventAction.name()+" Event for Object "+sifObject.getElementDef().name()+" was cached or has already been cached. No futher action performed.");
-			return false;
-		}
-		
-		// If we get here then the event was not cached or did not require caching. It still might be that there
-		// are other objects in the cache that had a dependency on the object of this event. Remove these
-		// dependencies. Only do this if it is not a DELETE event.
-    	if (!EventAction.DELETE.name().equals(service.hasPotentialDependencies(eventAction.name())))
-    	{
-			logger.debug("Check and remove dependency for "+eventAction.name()+" Event on Object "+sifObject.getElementDef().name()+".");
-    		removeDependencies(sifObject, zone);
-    	}
-		
-		// Tell the BaseSubscriber to perform the standard processing with this event (i.e. send it to appropriate
-		// queue.
-		return true;
+	    try
+	    {
+    		//Check if object required caching.
+    		boolean cached = cacheEventIfRequired(sifObject, eventAction, zone);
+    		
+    		// If it was cached then we do not want to do any more processing.
+    		if (cached)
+    		{
+    			logger.debug(eventAction.name()+" Event for Object "+sifObject.getElementDef().name()+" was cached or has already been cached. No futher action performed.");
+    			return false;
+    		}
+    		
+    		// If we get here then the event was not cached or did not require caching. It still might be that there
+    		// are other objects in the cache that had a dependency on the object of this event. Remove these
+    		// dependencies. Only do this if it is not a DELETE event.
+        	if (!EventAction.DELETE.name().equals(service.hasPotentialDependencies(eventAction.name())))
+        	{
+    			logger.debug("Check and remove dependency for "+eventAction.name()+" Event on Object "+sifObject.getElementDef().name()+".");
+        		removeDependencies(sifObject, zone);
+        	}
+    		
+    		// Tell the BaseSubscriber to perform the standard processing with this event (i.e. send it to appropriate
+    		// queue.
+    		return true;
+	    }
+	    catch (InvalidKeyException ex)
+	    {
+	        onKeyError(sifObject, zone, true, eventAction, ex);
+	        return false;
+	    }
     }
     
 	/*
@@ -280,23 +313,31 @@ public abstract class SBPBaseSubscriber extends SyncSubscriber
 	@Override
 	protected boolean preProcessQueryResults(SIFDataObject sifObject, Zone zone, MappingInfo mappingInfo)
 	{
-		//Check if object required caching.
-		boolean cached = cacheObjectIfRequired(sifObject, zone);
-		
-		// If it was cached then we do not want to do any more processing.
-		if (cached)
-		{
-			logger.debug("Object "+sifObject.getElementDef().name()+" was cached or has already been cached. No futher action performed.");
-			return false;
-		}
-		
-		// If we get here then the object was not cached or did not require caching. It still might be that there
-		// are other objects in the cache that had a dependency on this object. Remove these dependencies.
-		logger.debug("Check and remove dependency on Object "+sifObject.getElementDef().name()+".");
-		removeDependencies(sifObject, zone);
-		
-		// Tell the BaseSubscriber to perform the standard processing with this object (i.e. send it to appropriate queue.
-    	return true;		
+        try
+        {
+    		//Check if object required caching.
+    		boolean cached = cacheObjectIfRequired(sifObject, zone);
+    		
+    		// If it was cached then we do not want to do any more processing.
+    		if (cached)
+    		{
+    			logger.debug("Object "+sifObject.getElementDef().name()+" was cached or has already been cached. No futher action performed.");
+    			return false;
+    		}
+    		
+    		// If we get here then the object was not cached or did not require caching. It still might be that there
+    		// are other objects in the cache that had a dependency on this object. Remove these dependencies.
+    		logger.debug("Check and remove dependency on Object "+sifObject.getElementDef().name()+".");
+    		removeDependencies(sifObject, zone);
+    		
+    		// Tell the BaseSubscriber to perform the standard processing with this object (i.e. send it to appropriate queue.
+        	return true;		
+        }
+        catch (InvalidKeyException ex)
+        {
+            onKeyError(sifObject, zone, false, null, ex);
+            return false;
+        }
 	}
 
 	/*--------------------------------------------------*/
@@ -309,8 +350,12 @@ public abstract class SBPBaseSubscriber extends SyncSubscriber
      * the object needs to be cached with the remaining dependencies.
      * If the object has been cached then true is returned otherwise false is returned. False indicates that
      * there was no need to cache the object because is has no outstanding dependencies.
+     * 
+     * @throws InvalidKeyException Object has invalid primary or foreign key to cause an issue in the DOCache. Error already logged.
+     * @throws PersistenceException DOCache cannot be accessed successfully. Error already logged.
+
      */
-    private boolean cacheObjectIfRequired(SIFDataObject sifObject, Zone zone)
+    private boolean cacheObjectIfRequired(SIFDataObject sifObject, Zone zone) throws PersistenceException, InvalidKeyException
     {
     	boolean cached = false;
     	if (sifObject == null)
@@ -348,8 +393,11 @@ public abstract class SBPBaseSubscriber extends SyncSubscriber
      * 
      * NOTE: Only ADD and UPDATE events need to be dealt with that way. DELETE events don't require any of this.
      *       If the event type is DELETE then false is returned as no caching is required for delete events.
+     * 
+     * @throws InvalidKeyException Object has invalid primary or foreign key to cause an issue in the DOCache. Error already logged.
+     * @throws PersistenceException DOCache cannot be accessed successfully. Error already logged.
      */
-    private boolean cacheEventIfRequired(SIFDataObject sifObject, EventAction eventAction, Zone zone)
+    private boolean cacheEventIfRequired(SIFDataObject sifObject, EventAction eventAction, Zone zone) throws PersistenceException, InvalidKeyException
     {
     	boolean cached = false;
     	if (sifObject == null)
@@ -404,8 +452,11 @@ public abstract class SBPBaseSubscriber extends SyncSubscriber
      * in the target system. All dependencies that are returned with TRUE from the abstract method are then 
      * removed from the dependency list as they don't need to be requested. The final dependency list is then 
      * returned. If there are no remaining dependencies then null is returned.
+     * 
+     * @throws InvalidKeyException Object has invalid primary or foreign key to cause an issue in the DOCache. Error already logged.
+     * @throws PersistenceException DOCache cannot be accessed successfully. Error already logged.
      */
-    private List<DOCObject> getRemainingDependencies(SIFDataObject sifObject, String zoneId) throws PersistenceException
+    private List<DOCObject> getRemainingDependencies(SIFDataObject sifObject, String zoneId) throws PersistenceException, InvalidKeyException
     {
     	List<DOCObject> dependencies = service.getDependenciesFromSIFObjectAndCache(sifObject, getApplicationID(), zoneId);
     	if (dependencies != null)
