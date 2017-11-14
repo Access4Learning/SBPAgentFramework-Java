@@ -3,7 +3,7 @@
 	<classpathentry kind="src" path="sbpframework/src"/>
 	<classpathentry kind="src" path="config"/>
 	<classpathentry kind="src" path="test/src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.6.0_07"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/sifadk/SIFAU/javax.servlet.jar"/>
 	<classpathentry kind="lib" path="lib/sifadk/SIFAU/jsr173_api.jar"/>
 	<classpathentry kind="lib" path="lib/sifadk/SIFAU/org.mortbay.jetty.jar"/>
